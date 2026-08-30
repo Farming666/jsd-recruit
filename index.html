@@ -1,0 +1,3400 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>华为HSD校园开发者 - 纳新报名</title>
+    <!-- 轻量级依赖说明：仅引入 Google Fonts 字体 CDN（Sora 负责英文/数字的几何科技感，Noto Sans SC 负责中文正文）。
+         若内网无法访问 CDN，将自动回退到系统中文字体（PingFang SC / 微软雅黑），页面依然完整可用。
+         所有动画均为原生 CSS3 + ES6 实现，未使用任何 JS 动画库，保证零依赖可运行。 -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- 渐变色 SVG favicon（纯装饰，不影响内容） -->
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%232e63f6'/%3E%3Cstop offset='.5' stop-color='%237b5cff'/%3E%3Cstop offset='1' stop-color='%2319c8f5'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='16' fill='url(%23g)'/%3E%3Ctext x='32' y='43' font-family='Arial' font-size='32' font-weight='700' fill='white' text-anchor='middle'%3EH%3C/text%3E%3C/svg%3E">
+    <style>
+        /* ==================================================================
+           设计令牌（Design Tokens）—— 全站视觉基因
+           浅色科技风：珍珠白底 + 科技蓝/紫/水彩蓝渐变点缀
+           ================================================================== */
+        :root {
+            --bg: #f7f9fd;                 /* 页面底色：珍珠白 */
+            --surface: #ffffff;            /* 卡片表面：纯白 */
+            --ink: #0c142b;                /* 主文字：近黑深蓝 */
+            --ink-2: #4b5670;              /* 次级文字 */
+            --ink-3: #8a93a8;              /* 弱化文字 */
+            --line: rgba(16, 32, 71, .08); /* 发丝分割线 */
+
+            --blue: #2e63f6;               /* 科技蓝 */
+            --violet: #7b5cff;             /* 淡紫 */
+            --aqua: #19c8f5;               /* 水彩蓝 */
+            --grad: linear-gradient(115deg, var(--blue), var(--violet) 52%, var(--aqua));
+            --grad-soft: linear-gradient(135deg, rgba(46, 99, 246, .10), rgba(123, 92, 255, .10) 50%, rgba(25, 200, 245, .12));
+
+            --ease: cubic-bezier(.22, .8, .28, 1);   /* 全站统一缓动曲线 */
+            --radius: 24px;
+            --shadow-1: 0 6px 24px rgba(20, 40, 90, .06);
+            --shadow-2: 0 22px 55px rgba(20, 40, 90, .14);
+            --nav-h: 72px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html { scroll-behavior: smooth; }        /* 平滑滚动（锚点定位） */
+        section[id] { scroll-margin-top: calc(var(--nav-h) + 10px); } /* 锚点落点避开吸顶导航 */
+
+        body {
+            background: var(--bg);
+            color: var(--ink);
+            line-height: 1.75;
+            font-family: 'Sora', 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
+        }
+
+        /* 全局胶片颗粒噪点层：极低透明度铺满视口，为浅色界面增加"材质感"，
+           避免大平面纯白的塑料感（TRAE / Vercel 官网同款手法） */
+        .grain {
+            position: fixed; inset: 0; z-index: 3000; pointer-events: none; opacity: .035;
+            background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/></filter><rect width='160' height='160' filter='url(%23n)' opacity='0.6'/></svg>");
+        }
+
+        ::selection { background: #c7d4ff; color: #0c142b; }
+        img { max-width: 100%; }
+        a { text-decoration: none; }
+        ul { list-style: none; }
+        button { font-family: inherit; }
+
+        /* 细滚动条（桌面端） */
+        ::-webkit-scrollbar { width: 10px; }
+        ::-webkit-scrollbar-thumb { background: #c9d4ec; border-radius: 99px; border: 2px solid var(--bg); }
+        ::-webkit-scrollbar-thumb:hover { background: #aab9e6; }
+
+        .wrap { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+
+        /* ==================================================================
+           顶部滚动进度条 —— 一条 3px 渐变光带随阅读进度生长（ scaleX 驱动）
+           ================================================================== */
+        .pbar {
+            position: fixed; top: 0; left: 0; right: 0; height: 3px; z-index: 1200;
+            background: var(--grad); transform-origin: 0 50%; transform: scaleX(0);
+        }
+
+        /* ==================================================================
+           吸顶导航 —— 顶部悬浮透明（叠在英雄区图片上为白字），
+           下滑后切换为浅色毛玻璃 Glassmorphism（backdrop-filter 模糊+提饱和）
+           ================================================================== */
+        .nav {
+            position: fixed; inset: 0 0 auto; height: var(--nav-h); z-index: 1000;
+            transition: background .5s var(--ease), box-shadow .5s var(--ease);
+            animation: navIn .9s var(--ease) both;   /* 首屏导航自上而下淡入 */
+        }
+        @keyframes navIn { from { opacity: 0; transform: translateY(-100%); } to { opacity: 1; transform: none; } }
+
+        .nav-inner { max-width: 1200px; margin: 0 auto; height: 100%; padding: 0 24px; display: flex; align-items: center; justify-content: space-between; }
+
+        .brand { display: flex; align-items: center; gap: 14px; }
+        .brand img {
+            width: 42px; height: 42px; object-fit: cover; border-radius: 13px;
+            box-shadow: 0 6px 16px rgba(5, 15, 40, .35), inset 0 0 0 1px rgba(255, 255, 255, .28);
+            transition: transform .45s var(--ease);
+        }
+        .brand:hover img { transform: rotate(-8deg) scale(1.08); }   /* Logo 悬停微旋转 */
+        .brand h2 { font-size: 1.3rem; font-weight: 700; letter-spacing: .02em; color: #fff; transition: color .5s; white-space: nowrap; }
+
+        .nav-links { display: flex; gap: 6px; margin-right: -16px; } /* 四链接整体右移：抵消容器右内边距，更贴近右缘 */
+        .nav-links a {
+            position: relative; padding: 9px 16px; border-radius: 999px;
+            color: rgba(255, 255, 255, .92); font-weight: 500; font-size: 1rem;
+            transition: color .4s, background .4s;
+        }
+        /* 渐变下划线：hover / 命中当前区块时由中心向两侧生长 */
+        .nav-links a::after {
+            content: ''; position: absolute; left: 50%; bottom: 3px; width: 0; height: 2.5px;
+            border-radius: 3px; background: var(--grad);
+            transform: translateX(-50%); transition: width .4s var(--ease);
+        }
+        .nav-links a:hover::after, .nav-links a.active::after { width: 52%; }
+        .nav-links a:hover { background: rgba(255, 255, 255, .12); }
+
+        /* —— 已滚动状态：浅色毛玻璃 —— */
+        .nav.scrolled {
+            background: rgba(255, 255, 255, .7);
+            -webkit-backdrop-filter: blur(20px) saturate(1.6);
+            backdrop-filter: blur(20px) saturate(1.6);
+            box-shadow: 0 1px 0 var(--line), 0 12px 32px rgba(20, 40, 90, .07);
+        }
+        .nav.scrolled .brand h2 { color: var(--ink); }
+        .nav.scrolled .nav-links a { color: var(--ink-2); }
+        .nav.scrolled .nav-links a:hover { background: rgba(46, 99, 246, .08); }
+        .nav.scrolled .nav-links a.active { color: var(--blue); }
+
+        /* —— 移动端汉堡按钮：双线 → X 丝滑形变 —— */
+        .burger {
+            display: none; width: 44px; height: 44px; border: none; background: transparent;
+            cursor: pointer; position: relative; z-index: 1101;
+        }
+        .burger span {
+            position: absolute; left: 11px; width: 22px; height: 2px; border-radius: 2px;
+            background: #fff; transition: transform .45s var(--ease), top .45s var(--ease), background .4s;
+        }
+        .burger span:nth-child(1) { top: 18px; }
+        .burger span:nth-child(2) { top: 25px; }
+        body.menu-open .burger span { background: var(--ink); }
+        body.menu-open .burger span:nth-child(1) { top: 21.5px; transform: rotate(45deg); }
+        body.menu-open .burger span:nth-child(2) { top: 21.5px; transform: rotate(-45deg); }
+
+        /* —— 移动端下拉玻璃面板：链接逐条错峰滑入（transition-delay 级联） —— */
+        .m-panel {
+            position: fixed; top: var(--nav-h); left: 0; right: 0; z-index: 1050;
+            background: rgba(250, 251, 254, .92);
+            -webkit-backdrop-filter: blur(24px); backdrop-filter: blur(24px);
+            box-shadow: 0 26px 60px rgba(15, 30, 70, .14);
+            border-bottom: 1px solid var(--line);
+            padding: 14px 24px 22px;
+            transform: translateY(-14px); opacity: 0; visibility: hidden; pointer-events: none;
+            transition: transform .45s var(--ease), opacity .45s var(--ease), visibility .45s;
+        }
+        body.menu-open .m-panel { transform: none; opacity: 1; visibility: visible; pointer-events: auto; }
+        .m-panel a {
+            display: block; padding: 15px 12px; border-radius: 14px;
+            color: var(--ink); font-weight: 600; font-size: 1.06rem;
+            opacity: 0; transform: translateX(-16px);
+            transition: opacity .5s var(--ease), transform .5s var(--ease), background .3s;
+        }
+        .m-panel a:hover { background: rgba(46, 99, 246, .07); }
+        body.menu-open .m-panel a:nth-child(1) { transition-delay: .08s; }
+        body.menu-open .m-panel a:nth-child(2) { transition-delay: .16s; }
+        body.menu-open .m-panel a:nth-child(3) { transition-delay: .24s; }
+        body.menu-open .m-panel a:nth-child(4) { transition-delay: .32s; }
+        body.menu-open .m-panel a { opacity: 1; transform: none; }
+        body.menu-open { overflow: hidden; }
+
+        /* ==================================================================
+           英雄区（Hero）—— 全幅视觉锚点 + 视差滚动 + 漂浮光斑
+           ================================================================== */
+        .hero { position: relative; min-height: 100svh; display: grid; place-items: center; text-align: center; overflow: hidden; isolation: isolate; }
+
+        /* 背景图：高度撑到 124%，JS 视差只平移不清除，滚到底也不露边 */
+        .hero-bg { position: absolute; left: 0; top: -12%; width: 100%; height: 124%; object-fit: cover; z-index: -3; will-change: transform; }
+
+        /* 遮罩层：顶部压暗保证白字可读，底部无缝渐隐融入珍珠白页面底色 */
+        .hero-veil {
+            position: absolute; inset: 0; z-index: -2;
+            background: linear-gradient(180deg, rgba(7, 12, 28, .66) 0%, rgba(7, 12, 28, .32) 45%, rgba(10, 16, 36, .55) 72%, #f7f9fd 100%);
+        }
+
+        /* 中央辉光：给标题背后垫一团蓝紫柔光，增强"科技发布会"氛围 */
+        .hero-glow {
+            position: absolute; left: 50%; top: 40%; width: 72vw; height: 46vh; z-index: -2;
+            transform: translate(-50%, -50%); filter: blur(34px);
+            background: radial-gradient(closest-side, rgba(46, 99, 246, .4), rgba(123, 92, 255, .2) 55%, transparent);
+        }
+
+        /* 漂浮弥散光斑（Orbs）：三层 blur 大圆缓慢漂移缩放，交错延迟形成呼吸感 */
+        .orb { position: absolute; border-radius: 50%; filter: blur(64px); opacity: .5; z-index: -2; animation: drift 15s ease-in-out infinite alternate; }
+        .orb.o1 { width: 340px; height: 340px; left: -90px; top: 16%; background: radial-gradient(circle, #2e63f6, transparent 70%); }
+        .orb.o2 { width: 300px; height: 300px; right: -70px; top: 54%; background: radial-gradient(circle, #7b5cff, transparent 70%); animation-delay: -5s; }
+        .orb.o3 { width: 230px; height: 230px; right: 24%; top: 9%; background: radial-gradient(circle, #19c8f5, transparent 70%); animation-delay: -9s; }
+        @keyframes drift { from { transform: translate3d(0, 0, 0) scale(1); } to { transform: translate3d(44px, -32px, 0) scale(1.16); } }
+
+        .hero-inner { position: relative; max-width: 880px; padding: 130px 24px 150px; }
+
+        /* 首屏入场动画：淡入 + 上浮 + 轻微去模糊，三段错峰（.05/.2/.35s） */
+        .rise { opacity: 0; animation: rise 1s var(--ease) both; }
+        .d1 { animation-delay: .05s; } .d2 { animation-delay: .2s; } .d3 { animation-delay: .35s; }
+        @keyframes rise { from { opacity: 0; transform: translateY(38px); filter: blur(10px); } to { opacity: 1; transform: none; filter: blur(0); } }
+
+        .hero h2 {
+            font-size: clamp(1.2rem, 6.6vw, 4.2rem); font-weight: 800; line-height: 1.18; color: #fff;
+            letter-spacing: .01em; text-shadow: 0 10px 44px rgba(5, 10, 25, .5);
+            white-space: nowrap; /* 窄屏强制单行：字号随 vw 缩放，避免折行/溢出 */
+        }
+        /* 关键词渐变上色（仅着色，不改动文字内容） */
+        .hero h2 .grad-text {
+            background: linear-gradient(92deg, #8db4ff, #cbb8ff 45%, #8ff0ff);
+            -webkit-background-clip: text; background-clip: text; color: transparent;
+        }
+        .hero p { color: rgba(255, 255, 255, .9); font-size: clamp(1rem, 2vw, 1.22rem); max-width: 660px; margin: 24px auto 42px; }
+
+        /* CTA 按钮：渐变底 + 光晕投影，悬停时背景位移动、按钮上浮、箭头右移、高光扫过 */
+        .cta {
+            position: relative; display: inline-flex; align-items: center; gap: 10px;
+            padding: 16px 46px; border-radius: 999px; overflow: hidden;
+            color: #fff; font-weight: 700; font-size: 1.06rem; letter-spacing: .02em;
+            background: var(--grad); background-size: 220% 100%;
+            box-shadow: 0 12px 36px rgba(64, 88, 255, .45), inset 0 1px 0 rgba(255, 255, 255, .35);
+            transition: transform .4s var(--ease), box-shadow .4s var(--ease), background-position .7s var(--ease);
+        }
+        .cta:hover { transform: translateY(-4px); box-shadow: 0 18px 48px rgba(64, 88, 255, .6); background-position: 100% 0; }
+        .cta::after {   /* 高光扫过：一条斜向白色光带，hover 时从左掠到右 */
+            content: ''; position: absolute; top: 0; left: -70%; width: 45%; height: 100%;
+            background: linear-gradient(100deg, transparent, rgba(255, 255, 255, .5), transparent);
+            transform: skewX(-18deg); transition: left .8s var(--ease);
+        }
+        .cta:hover::after { left: 130%; }
+        .cta svg { transition: transform .4s var(--ease); }
+        .cta:hover svg { transform: translateX(5px); }
+
+        /* 滚动引导：胶囊轨迹 + 上下往返的小圆点（纯图形，无文字） */
+        .cue { position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); width: 26px; height: 44px; border: 2px solid rgba(255, 255, 255, .55); border-radius: 15px; }
+        .cue::before {
+            content: ''; position: absolute; left: 50%; top: 8px; width: 4px; height: 9px; margin-left: -2px;
+            border-radius: 4px; background: #fff; animation: cue 1.9s ease-in-out infinite;
+        }
+        @keyframes cue { 0% { transform: translateY(0); opacity: 1; } 72% { transform: translateY(15px); opacity: 0; } 100% { opacity: 0; } }
+
+        /* ==================================================================
+           通用区块与标题
+           ================================================================== */
+        .sec { position: relative; padding: clamp(76px, 9vw, 122px) 0; }
+
+        .sec-head { text-align: center; max-width: 780px; margin: 0 auto clamp(44px, 6vw, 64px); }
+        .sec-head .bar { width: 58px; height: 4px; border-radius: 99px; background: var(--grad); margin: 0 auto 20px; }
+        .sec-head h2 { font-size: clamp(1.7rem, 3.4vw, 2.5rem); font-weight: 800; letter-spacing: .01em; }
+        .sec-head p { margin-top: 16px; color: var(--ink-2); font-size: 1.08rem; }
+
+        /* ==================================================================
+           滚动入场系统（IntersectionObserver 驱动）
+           [data-reveal] 初始隐藏，进入视口后播放一次性动画；
+           animationend 时 JS 解除动画内联占用，把 transform 交还给 hover 效果
+           ================================================================== */
+        [data-reveal] { opacity: 0; }
+        [data-reveal].in { animation: rv .95s var(--ease) var(--d, 0s) both; }
+        [data-reveal="left"]  { --tf: translateX(-38px); }
+        [data-reveal="right"] { --tf: translateX(38px); }
+        [data-reveal="zoom"]  { --tf: scale(.92); }
+        @keyframes rv { from { opacity: 0; transform: var(--tf, translateY(34px)); } to { opacity: 1; transform: none; } }
+
+        /* ==================================================================
+           卡片系统：白色玻璃卡 + 渐变描边 + 光泽扫过 + 3D 微倾斜
+           ================================================================== */
+        .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 26px; }
+
+        .card {
+            position: relative; overflow: hidden;
+            background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+            padding: 32px 30px; box-shadow: var(--shadow-1);
+            transition: transform .18s ease-out, box-shadow .45s var(--ease), border-color .45s;
+        }
+        /* 渐变描边：hover 时以 mask 双层法点亮 1px 渐变边框 */
+        .card::before {
+            content: ''; position: absolute; inset: 0; border-radius: var(--radius); padding: 1.4px;
+            background: var(--grad); opacity: 0; transition: opacity .45s; pointer-events: none;
+            -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+            -webkit-mask-composite: xor; mask-composite: exclude;
+        }
+        /* 光泽扫过：hover 时一道斜向高光从左侧掠向右侧 */
+        .card .shine {
+            position: absolute; inset: 0; pointer-events: none; transform: translateX(-135%);
+            background: linear-gradient(115deg, transparent 42%, rgba(255, 255, 255, .75) 50%, transparent 58%);
+            transition: transform .95s var(--ease);
+        }
+        .card:hover { transform: translateY(-8px); box-shadow: var(--shadow-2); border-color: transparent; }
+        .card:hover::before { opacity: 1; }
+        .card:hover .shine { transform: translateX(135%); }
+
+        .card h3 { font-size: 1.34rem; font-weight: 700; margin: 22px 0 10px; }
+        .card p { color: var(--ink-2); font-size: 1rem; }
+
+        /* —— 动态 SVG 图标容器（Icon Orb）：软渐变底 + 悬停上浮旋转 + 外圈辉光 —— */
+        .icon-orb {
+            position: relative; width: 62px; height: 62px; border-radius: 19px;
+            display: grid; place-items: center;
+            background: var(--grad-soft);
+            box-shadow: inset 0 0 0 1px rgba(46, 99, 246, .15), inset 0 1px 0 rgba(255, 255, 255, .9);
+            transition: transform .5s var(--ease);
+        }
+        .icon-orb::before {   /* 图标背后的弥散辉光，hover 时点亮 */
+            content: ''; position: absolute; inset: -4px; border-radius: 23px; z-index: -1;
+            background: var(--grad); filter: blur(16px); opacity: 0; transition: opacity .5s;
+        }
+        .card:hover .icon-orb { transform: translateY(-4px) rotate(-6deg) scale(1.06); }
+        .card:hover .icon-orb::before { opacity: .55; }
+
+        .ig { width: 30px; height: 30px; fill: none; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; overflow: visible; }
+        .ig g { transform-box: fill-box; transform-origin: center; }
+
+        /* —— SVG 流光动效族：旋转 / 反转 / 流动虚线 / 光标闪烁 / 星芒明灭 / 呼吸缩放 —— */
+        .an-spin      { animation: spin 9s linear infinite; }
+        .an-spin-slow { animation: spin 14s linear infinite; }
+        .an-spin-rev  { animation: spinR 12s linear infinite; }
+        .an-dash      { stroke-dasharray: 3 4; animation: dash 1.4s linear infinite; }
+        .an-blink     { animation: blink 1.1s steps(1) infinite; }
+        .an-twinkle   { animation: twinkle 2.6s ease-in-out infinite; }
+        .an-pop       { animation: pop 2.4s ease-in-out infinite; }
+        .an-wave      { transform-origin: left center; animation: wave 2.2s ease-in-out infinite; }
+        @keyframes spin  { to { transform: rotate(360deg); } }
+        @keyframes spinR { to { transform: rotate(-360deg); } }
+        @keyframes dash  { to { stroke-dashoffset: -14; } }
+        @keyframes blink { 0%, 55% { opacity: 1; } 56%, 100% { opacity: 0; } }
+        @keyframes twinkle { 0%, 100% { opacity: .25; } 50% { opacity: 1; } }
+        @keyframes pop     { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.14); } }
+        @keyframes wave    { 0%, 100% { opacity: .35; transform: scale(.9); } 50% { opacity: 1; transform: scale(1.05); } }
+        /* 悬停加速：卡片 hover 时图标旋转/流动速率提升，形成"被唤醒"的交互反馈 */
+        .card:hover .an-spin, .card:hover .an-spin-slow { animation-duration: 2.4s; }
+        .card:hover .an-dash { animation-duration: .5s; }
+
+        /* ==================================================================
+           各区块底色：大留白 + 极淡的多点弥散渐变，划分视觉层级
+           ================================================================== */
+        .sec-about   { background: radial-gradient(60% 40% at 50% 0%, rgba(123, 92, 255, .055), transparent), var(--bg); }
+        .sec-benefits{
+            background:
+                radial-gradient(circle at 12% 8%, rgba(46, 99, 246, .06), transparent 42%),
+                radial-gradient(circle at 88% 92%, rgba(25, 200, 245, .07), transparent 42%),
+                var(--surface);
+            box-shadow: inset 0 1px 0 var(--line), inset 0 -1px 0 var(--line);
+        }
+        .sec-process { background: linear-gradient(180deg, #f2f5fd, #edf1fb); }
+
+        /* 招募对象：居中排版变体 */
+        .card.center { text-align: center; padding: 38px 30px; }
+        .card.center .icon-orb { margin: 0 auto; }
+        .card.center h3 { margin-top: 24px; }
+
+        /* 原版斜体寄语 → 升级为渐变引言胶囊（文字一字未改） */
+        .note {
+            margin: 38px auto 0; max-width: 680px; text-align: center; font-style: italic;
+            color: var(--ink-2); padding: 16px 28px; border-radius: 18px;
+            background: linear-gradient(120deg, rgba(46, 99, 246, .07), rgba(123, 92, 255, .07));
+            box-shadow: inset 0 0 0 1px rgba(46, 99, 246, .13);
+        }
+
+        /* ==================================================================
+           轮播图 —— 平滑交叉淡化 + Ken Burns 缓推 + 渐变描边相框
+           实现逻辑：所有图片绝对定位堆叠；.on 控制 opacity 与 8s 线性缓放；
+           旧图淡出时 transform 以同一条 8s transition 平滑回退，杜绝跳变
+           ================================================================== */
+        .car-wrap { margin-top: 60px; padding: 2px; border-radius: 28px; background: linear-gradient(120deg, rgba(46, 99, 246, .55), rgba(123, 92, 255, .55), rgba(25, 200, 245, .55)); }
+        .carousel { position: relative; border-radius: 26px; overflow: hidden; aspect-ratio: 16 / 7; min-height: 300px; background: #e9eef8; box-shadow: var(--shadow-2); }
+        .carousel img {
+            position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;
+            opacity: 0; transform: scale(1);
+            transition: opacity 1.1s ease, transform 8s linear;   /* 8s 线性缩放 = Ken Burns 缓推镜头 */
+        }
+        .carousel img.on { opacity: 1; transform: scale(1.07); }
+
+        /* 底部渐变压暗，保证指示点在任何图片上都清晰 */
+        .car-shade { position: absolute; inset: auto 0 0 0; height: 90px; pointer-events: none; background: linear-gradient(180deg, transparent, rgba(6, 12, 30, .45)); }
+
+        /* 左右切换按钮：玻璃圆钮，容器 hover 时浮现；触屏设备常显 */
+        .car-btn {
+            position: absolute; top: 50%; transform: translateY(-50%); z-index: 5;
+            width: 46px; height: 46px; border: none; border-radius: 50%; cursor: pointer;
+            display: grid; place-items: center; color: #fff;
+            background: rgba(255, 255, 255, .18);
+            -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .35);
+            opacity: 0; transition: opacity .4s, background .3s, transform .3s;
+        }
+        .car-btn:hover { background: rgba(255, 255, 255, .34); }
+        .car-btn.prev { left: 18px; } .car-btn.prev:hover { transform: translateY(-50%) translateX(-3px); }
+        .car-btn.next { right: 18px; } .car-btn.next:hover { transform: translateY(-50%) translateX(3px); }
+        .carousel:hover .car-btn, .carousel:focus-within .car-btn { opacity: 1; }
+        @media (hover: none) { .car-btn { opacity: 1; } }
+
+        /* 指示点：当前项拉伸为渐变胶囊 */
+        .car-dots { position: absolute; left: 0; right: 0; bottom: 18px; z-index: 5; display: flex; justify-content: center; gap: 8px; }
+        .car-dots .dot {
+            width: 9px; height: 9px; border-radius: 99px; border: none; cursor: pointer; padding: 0;
+            background: rgba(255, 255, 255, .55); transition: width .45s var(--ease), background .45s;
+        }
+        .car-dots .dot.on { width: 28px; background: #fff; box-shadow: 0 0 12px rgba(255, 255, 255, .8); }
+
+        /* ==================================================================
+           时间轴 —— 中轴随滚动生长（scaleY 由 JS 按进度驱动），
+           发光头部沿线流淌，节点经过后点亮并持续脉冲扩散光环
+           ================================================================== */
+        .timeline { position: relative; max-width: 900px; margin: 20px auto 0; }
+        .tl-track { position: absolute; left: 50%; top: 8px; bottom: 8px; width: 4px; transform: translateX(-50%); border-radius: 99px; background: rgba(18, 34, 80, .09); }
+        .tl-fill  { position: absolute; inset: 0; border-radius: 99px; background: linear-gradient(180deg, var(--blue), var(--violet) 60%, var(--aqua)); transform: scaleY(0); transform-origin: top; }
+        /* 流淌光头：跟随进度百分比定位的发光圆点 */
+        .tl-head  { position: absolute; left: 50%; top: 0; width: 14px; height: 14px; transform: translate(-50%, -50%); border-radius: 50%; background: #fff; box-shadow: 0 0 0 4px rgba(123, 92, 255, .22), 0 0 24px 7px rgba(84, 101, 255, .6); }
+
+        .tl-item { position: relative; width: 50%; padding: 8px 48px 52px; }
+        .tl-item:nth-child(odd)  { left: 0; text-align: right; }
+        .tl-item:nth-child(even) { left: 50%; }
+
+        /* 时间轴节点：灰环 → 经过点亮为渐变实心 + 双层辉光 + 脉冲扩散环 */
+        .tl-node { position: absolute; top: 26px; z-index: 2; width: 16px; height: 16px; border-radius: 50%; background: #fff; box-shadow: inset 0 0 0 4px #ccd6ef; transition: box-shadow .5s, transform .5s, background .5s; }
+        .tl-item:nth-child(odd)  .tl-node { right: -8px; }
+        .tl-item:nth-child(even) .tl-node { left: -8px; }
+        .tl-node::before { content: ''; position: absolute; inset: -7px; border-radius: 50%; background: var(--grad); filter: blur(7px); opacity: 0; transition: opacity .5s; }
+        .tl-node::after  { content: ''; position: absolute; inset: -7px; border-radius: 50%; border: 2px solid rgba(99, 105, 255, .6); opacity: 0; }
+        .tl-node.lit { background: #fff; box-shadow: 0 0 0 4.5px var(--violet), 0 0 22px rgba(84, 101, 255, .75); transform: scale(1.12); }
+        .tl-node.lit::before { opacity: .9; }
+        .tl-node.lit::after  { animation: nodePulse 2.3s ease-out infinite; }
+        @keyframes nodePulse { 0% { opacity: .9; transform: scale(.7); } 75% { opacity: 0; transform: scale(1.9); } 100% { opacity: 0; transform: scale(1.9); } }
+
+        .tl-card {
+            position: relative; display: inline-block; text-align: left; max-width: 360px;
+            background: var(--surface); border: 1px solid var(--line); border-radius: 20px;
+            padding: 22px 26px; box-shadow: var(--shadow-1);
+            transition: transform .4s var(--ease), box-shadow .4s var(--ease);
+        }
+        .tl-card:hover { transform: translateY(-5px); box-shadow: var(--shadow-2); }
+        .tl-date {
+            display: inline-block; padding: 4px 14px; border-radius: 999px; font-weight: 700; font-size: .9rem;
+            background: var(--grad-soft); box-shadow: inset 0 0 0 1px rgba(46, 99, 246, .16);
+            background-clip: padding-box; color: #3346c9;
+            white-space: nowrap; /* 日期胶囊禁止折行，窄屏下靠字号缩放适配 */
+        }
+        .tl-card h3 { font-size: 1.24rem; margin: 12px 0 6px; }
+        .tl-card p { color: var(--ink-2); font-size: 1rem; }
+
+        /* ==================================================================
+           报名二维码区 —— 旋转极光环 + 漂浮粒子 + 扫描角标
+           ================================================================== */
+        .qr-stage { position: relative; display: grid; place-items: center; padding: 26px 0 6px; }
+        .qr-field { position: relative; padding: 52px 48px; }
+        /* 极光氛围底：三团彩色弥散光缓慢涨缩 */
+        .aurora {
+            position: absolute; inset: -46px; pointer-events: none; filter: blur(8px);
+            background:
+                radial-gradient(38% 42% at 28% 30%, rgba(46, 99, 246, .17), transparent),
+                radial-gradient(40% 44% at 72% 62%, rgba(123, 92, 255, .16), transparent),
+                radial-gradient(30% 34% at 62% 22%, rgba(25, 200, 245, .15), transparent);
+            animation: auroraShift 12s ease-in-out infinite alternate;
+        }
+        @keyframes auroraShift { to { transform: scale(1.09) rotate(2deg); } }
+
+        /* 漂浮粒子：JS 随机生成 18 枚彩色光点，负延迟错峰升起闪烁 */
+        .qr-particles { position: absolute; inset: -26px; pointer-events: none; }
+        .qr-particles i { position: absolute; border-radius: 50%; background: var(--c, #2e63f6); box-shadow: 0 0 12px var(--c, #2e63f6); opacity: 0; animation: floatDot var(--t, 6s) ease-in-out var(--dl, 0s) infinite; }
+        @keyframes floatDot { 0%, 100% { transform: translateY(8px); opacity: 0; } 30%, 70% { opacity: .9; } 50% { transform: translateY(-16px); } }
+
+        /* 旋转极光环：超尺寸 conic 渐变层在 padding 框后持续旋转，形成流动描边 */
+        .qr-halo { position: relative; border-radius: 30px; padding: 3px; overflow: hidden; isolation: isolate; transition: transform .5s var(--ease); }
+        .qr-halo::before {
+            content: ''; position: absolute; inset: -60%; z-index: -1;
+            background: conic-gradient(#2e63f6, #7b5cff, #19c8f5, #8ff0ff, #2e63f6);
+            animation: spin 6.5s linear infinite;
+        }
+        .qr-card { position: relative; background: #fff; border-radius: 27px; padding: 18px; box-shadow: 0 24px 60px rgba(30, 50, 120, .18); }
+        .qr-stage:hover .qr-halo { transform: scale(1.045); }   /* 悬停整体放大 */
+        .qr-stage:hover .qr-halo::before { animation-duration: 2s; }  /* 悬停时极光旋转提速 */
+
+        .qr-frame { position: relative; padding: 10px; border-radius: 16px; background: linear-gradient(160deg, #f5f8ff, #fff); }
+        .qr-frame img { display: block; width: min(280px, 62vw); border-radius: 12px; }
+        /* 四角扫描角标：hover 时向四角外扩，营造"取景框"仪式感 */
+        .qr-frame b { position: absolute; width: 26px; height: 26px; border: 3px solid transparent; border-radius: 5px; transition: transform .45s var(--ease); }
+        .qr-frame b:nth-of-type(1) { top: 0; left: 0; border-top-color: var(--blue); border-left-color: var(--blue); }
+        .qr-frame b:nth-of-type(2) { top: 0; right: 0; border-top-color: var(--violet); border-right-color: var(--violet); }
+        .qr-frame b:nth-of-type(3) { bottom: 0; left: 0; border-bottom-color: var(--aqua); border-left-color: var(--aqua); }
+        .qr-frame b:nth-of-type(4) { bottom: 0; right: 0; border-bottom-color: var(--blue); border-right-color: var(--blue); }
+        .qr-stage:hover .qr-frame b:nth-of-type(1) { transform: translate(-7px, -7px); }
+        .qr-stage:hover .qr-frame b:nth-of-type(2) { transform: translate(7px, -7px); }
+        .qr-stage:hover .qr-frame b:nth-of-type(3) { transform: translate(-7px, 7px); }
+        .qr-stage:hover .qr-frame b:nth-of-type(4) { transform: translate(7px, 7px); }
+
+        /* ==================================================================
+           页脚 —— 深夜蓝底与浅色正文形成 Apple 式首尾对比，顶部一条渐变光缝
+           ================================================================== */
+        /* ==================================================================
+           星空衔接：#apply（立即扫码）→ 页脚（footer）无缝深空渐变
+           ================================================================== */
+        #apply {
+            background: linear-gradient(180deg, rgba(247,249,253,0) 0%, rgba(10,17,36,.42) 12%, #0c142e 32%, #0a1124 62%, #060b1e 100%);
+        }
+        #apply .sec-head h2 { color: #fff; text-shadow: 0 2px 16px rgba(3, 8, 24, .45); }
+        #apply .sec-head p { color: rgba(255, 255, 255, .8); }
+
+        footer {
+            position: relative;
+            background: linear-gradient(180deg, #060b1e 0%, #04081a 50%, #030614 100%);
+            color: #c6cde4;
+            overflow: hidden;
+        }
+        /* 移除顶部分割光缝，使报名区与页脚边界融入星空 */
+        footer::before { content: none; }
+
+        /* 星空点缀：微小四芒星，缓慢闪烁（真实星空节奏：大小/亮度/周期各异） */
+        .stars { position: absolute; inset: 0; pointer-events: none; }
+        .stars i {
+            position: absolute; left: var(--sx); top: var(--sy);
+            width: var(--sz); height: var(--sz);
+            background: #fff;
+            clip-path: polygon(50% 0%, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0% 50%, 38% 38%);
+            animation: starTwinkle var(--sd, 3s) ease-in-out var(--sdl, 0s) infinite alternate;
+        }
+        @keyframes starTwinkle {
+            from { opacity: .12; transform: scale(.8); }
+            to { opacity: .85; transform: scale(1.15); }
+        }
+
+        /* ==================================================================
+           星球彩蛋：右下角缓慢自转，滚动到报名区才浮现
+           ================================================================== */
+        .planet-egg {
+            position: fixed; right: 36px; bottom: calc(100px + env(safe-area-inset-bottom, 0px)); z-index: 1400;
+            width: 74px; height: 74px; pointer-events: auto; cursor: pointer;
+            opacity: 0; visibility: hidden;
+            user-select: none; -webkit-tap-highlight-color: transparent;
+        }
+        .planet-egg.pulse { animation: eggPulse .3s ease; }
+        @keyframes eggPulse {
+            0% { transform: scale(1); }
+            45% { transform: scale(.86); }
+            100% { transform: scale(1); }
+        }
+
+        /* ==================================================================
+           星球彩蛋模式：全屏小游戏层（跃迁进入）
+           ================================================================== */
+        .egg-mode {
+            position: fixed; inset: 0; z-index: 2000;
+            background: #04070f;
+            clip-path: circle(0% at calc(100% - 73px) calc(100% - 137px));
+            visibility: hidden;
+            touch-action: none;
+            transition: clip-path .85s cubic-bezier(.76, 0, .24, 1), visibility 0s .85s;
+        }
+        .egg-mode.open {
+            clip-path: circle(150% at calc(100% - 73px) calc(100% - 137px));
+            visibility: visible;
+            transition: clip-path .85s cubic-bezier(.76, 0, .24, 1);
+        }
+        .egg-mode.closing {
+            clip-path: circle(0% at calc(100% - 73px) calc(100% - 137px));
+            transition: clip-path .85s cubic-bezier(.76, 0, .24, 1), visibility 0s .85s;
+        }
+        .egg-mode canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+        .egg-ui { position: absolute; inset: 0; pointer-events: none; }
+        .egg-btn {
+            pointer-events: auto; position: absolute; width: 54px; height: 54px;
+            border-radius: 50%; border: none;
+            background: rgba(255, 255, 255, .82); color: #1a2744;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; backdrop-filter: blur(14px) saturate(1.4); -webkit-backdrop-filter: blur(14px) saturate(1.4);
+            box-shadow: 0 6px 24px rgba(8, 20, 48, .18), 0 2px 8px rgba(8, 20, 48, .08), inset 0 0 0 0.6px rgba(255, 255, 255, .7);
+            transition: transform .18s ease, background .18s ease, box-shadow .18s ease, opacity .3s ease;
+            user-select: none; -webkit-tap-highlight-color: transparent;
+        }
+        .egg-btn:hover { background: rgba(255, 255, 255, .94); color: #16213f; box-shadow: 0 10px 36px rgba(8, 20, 48, .26), 0 4px 14px rgba(8, 20, 48, .1), inset 0 0 0 0.6px rgba(255, 255, 255, .8); }
+        .egg-btn:active { transform: scale(.93); }
+        .egg-btn svg { width: 25px; height: 25px; fill: none; stroke: currentColor; stroke-width: 2.3; stroke-linecap: round; stroke-linejoin: round; }
+        .egg-back { left: 22px; top: 22px; }
+        .egg-back:hover { transform: scale(1.05); }
+        .egg-start {
+            left: 50%; bottom: 16%; width: 66px; height: 66px;
+            transform: translateX(-50%);
+        }
+        .egg-start:hover { transform: translateX(-50%) scale(1.05); }
+        .egg-start:active { transform: translateX(-50%) scale(.93); }
+        .egg-start svg { width: 26px; height: 26px; fill: currentColor; stroke: none; }
+        .egg-start.hidden { opacity: 0; pointer-events: none; transform: translateX(-50%) scale(.82); }
+        .egg-hud {
+            position: absolute; top: 26px; left: 0; right: 0;
+            display: flex; justify-content: center; gap: 30px;
+            color: rgba(222, 231, 255, .92);
+            font: 600 14px/1.4 "Segoe UI", system-ui, -apple-system, sans-serif;
+            letter-spacing: .06em; text-shadow: 0 2px 12px rgba(0, 0, 0, .55);
+            transition: opacity .3s ease;
+        }
+        .egg-hud b { font-weight: 700; font-variant-numeric: tabular-nums; font-size: 16px; }
+        .egg-hud .hud-score { color: #a7bcff; }
+        .egg-hud .hud-dist { color: #8fe3c8; }
+        .egg-hud.hidden { opacity: 0; pointer-events: none; }
+        .egg-hint {
+            position: absolute; left: 0; right: 0; bottom: 27%;
+            text-align: center; color: rgba(186, 202, 238, .55);
+            font: 400 12px/1.6 "Segoe UI", system-ui, -apple-system, sans-serif;
+            letter-spacing: .12em; text-shadow: 0 2px 10px rgba(0, 0, 0, .5);
+            transition: opacity .3s ease;
+        }
+        .egg-hint.hidden { opacity: 0; pointer-events: none; }
+        .planet-orbit { width: 100%; height: 100%; border-radius: 50%; animation: planetSpin 36s linear infinite; }
+        .planet-body {
+            position: relative; width: 100%; height: 100%; border-radius: 50%; overflow: hidden;
+            background: radial-gradient(circle at 32% 28%, #8fa3d8 0%, #4f64a4 32%, #283660 68%, #111b3c 100%);
+            box-shadow: 0 0 36px 6px rgba(128, 158, 255, .3), inset -10px -12px 26px rgba(0, 0, 0, .5), inset 5px 5px 14px rgba(255, 255, 255, .13);
+        }
+        .planet-body .p-spot { position: absolute; border-radius: 50%; background: rgba(255, 255, 255, .1); }
+        .planet-body .s1 { width: 16px; height: 12px; left: 22%; top: 32%; transform: rotate(-16deg); }
+        .planet-body .s2 { width: 9px; height: 9px; right: 18%; top: 24%; background: rgba(255, 255, 255, .08); }
+        .planet-body .s3 { width: 22px; height: 7px; left: 12%; bottom: 22%; transform: rotate(12deg); background: rgba(0, 0, 0, .2); }
+        .planet-body .s4 { width: 11px; height: 10px; right: 24%; bottom: 30%; background: rgba(255, 255, 255, .07); }
+        @keyframes planetSpin { to { transform: rotate(360deg); } }
+        footer::after {
+            content: ''; position: absolute; top: -140px; left: 50%; transform: translateX(-50%);
+            width: 640px; height: 280px; pointer-events: none;
+            background: radial-gradient(closest-side, rgba(99, 110, 255, .2), transparent); filter: blur(30px);
+        }
+        .f-grid { position: relative; display: grid; grid-template-columns: 1.5fr 1fr 1fr; gap: 46px; padding: 66px 0 44px; }
+        .f-grid h3 { color: #fff; font-size: 1.14rem; margin-bottom: 18px; position: relative; padding-bottom: 12px; }
+        .f-grid h3::after { content: ''; position: absolute; left: 0; bottom: 0; width: 34px; height: 2px; border-radius: 2px; background: var(--grad); }
+        .f-grid p { color: #aab3cf; font-size: 1rem; }
+        .f-links li { margin-bottom: 12px; }
+        .f-links a, .f-links li { color: #aab3cf; font-size: 1rem; transition: color .3s, padding-left .3s; }
+        .f-links a:hover { color: #fff; padding-left: 5px; }
+        .f-bottom { position: relative; border-top: 1px solid rgba(255, 255, 255, .09); padding: 20px 0; text-align: center; color: #7f89a8; font-size: .93rem; }
+
+        /* ==================================================================
+           响应式
+           ================================================================== */
+        @media (max-width: 900px) {
+            .f-grid { grid-template-columns: 1fr; gap: 34px; }
+            .carousel { aspect-ratio: 16 / 9; }
+        }
+        @media (max-width: 768px) {
+            .nav-links { display: none; }
+            .burger { display: block; }
+            .brand h2 { font-size: 1.1rem; }
+            .hero p { margin-bottom: 36px; }
+
+            /* 时间轴切换为单侧：中轴靠左 20px，节点全部挂到轴线同一位置 */
+            .tl-track { left: 20px; transform: none; }
+            /* 注意：.tl-head 是 4px 宽轨道的子元素，必须沿用 left:50% 相对轨道自身居中；
+               不能写 left:20px（那是相对轨道左边缘，会让光头右偏约 18px） */
+            .tl-item { width: 100%; left: 0 !important; text-align: left !important; padding: 6px 0 44px 62px; }
+            /* 节点中心与轨道中心对齐：轨道中心 = 20 + 4/2 = 22px，节点 left = 22 - 16/2 = 14px */
+            .tl-item .tl-node { left: 14px !important; right: auto !important; }
+            .tl-card { max-width: none; display: block; }
+
+            .carousel { aspect-ratio: 4 / 3; min-height: 240px; }
+            .card { padding: 28px 24px; }
+            .qr-field { padding: 40px 26px; }
+            .tl-date { font-size: .78rem; } /* 窄屏单侧时间轴下缩小日期胶囊，避免溢出卡片 */
+        }
+        @media (max-width: 480px) {
+            .brand h2 { display: none; }
+            .cta { padding: 14px 38px; }
+        }
+
+        /* 手机端增强适配：收窄边距、缩小悬浮球与彩蛋按钮、优化 HUD 密度 */
+        @media (max-width: 640px) {
+            .wrap { padding: 0 16px; }
+            .hero-inner { padding: 112px 16px 128px; }
+            .sec-head h2 { font-size: 1.45rem; }
+            .sec-head p { font-size: 1rem; }
+            .qr-field { padding: 30px 18px; }
+            .planet-egg { right: 14px; bottom: calc(72px + env(safe-area-inset-bottom, 0px)); width: 60px; height: 60px; }
+            /* 彩蛋跃迁圆心对齐星球实际位置（60px、right 14px、bottom 72px → 中心距右 44px、距底 102px） */
+            .egg-mode, .egg-mode.open, .egg-mode.closing { clip-path: circle(0% at calc(100% - 44px) calc(100% - 102px)); }
+            .egg-mode.open { clip-path: circle(150% at calc(100% - 44px) calc(100% - 102px)); }
+            .egg-hud { top: 16px; gap: 14px; font-size: 12px; }
+            .egg-hud b { font-size: 14px; }
+            .egg-back { left: 14px; top: 14px; width: 46px; height: 46px; }
+            .egg-start { width: 58px; height: 58px; }
+            /* 卡片栅格降级为单列，避免 minmax(300px,1fr) 在 <300px 容器下横向溢出 */
+            .cards { grid-template-columns: minmax(0, 1fr); }
+            /* 窄屏弱化 Hero 漂浮光斑，避免干扰标题文字 */
+            .orb.o2, .orb.o3 { display: none; }
+            .orb.o1 { opacity: .45; }
+        }
+        @media (max-width: 420px) {
+            .planet-egg { right: 10px; bottom: calc(62px + env(safe-area-inset-bottom, 0px)); width: 54px; height: 54px; }
+            .tl-card { font-size: .92rem; }
+            /* 星球 54px、right 10px、bottom 62px → 中心距右 37px、距底 89px */
+            .egg-mode, .egg-mode.open, .egg-mode.closing { clip-path: circle(0% at calc(100% - 37px) calc(100% - 89px)); }
+            .egg-mode.open { clip-path: circle(150% at calc(100% - 37px) calc(100% - 89px)); }
+        }
+
+        /* 无障碍：用户系统开启"减弱动态效果"时，关闭所有动画与视差 */
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after { animation-duration: .001s !important; animation-iteration-count: 1 !important; transition-duration: .001s !important; }
+            html { scroll-behavior: auto; }
+        }
+    </style>
+    <noscript><style>[data-reveal]{opacity:1}</style></noscript>
+</head>
+<body>
+    <!-- 胶片颗粒噪点层 -->
+    <div class="grain" aria-hidden="true"></div>
+
+    <!-- 顶部阅读进度光带 -->
+    <div class="pbar" id="pbar" aria-hidden="true"></div>
+
+    <!-- 导航栏：滚动后由 JS 追加 .scrolled 触发毛玻璃态 -->
+    <header class="nav" id="nav">
+        <div class="nav-inner">
+            <a class="brand" href="#top" aria-label="返回顶部">
+                <img src="./img/logo.jpg" alt="">
+                <h2>华为HSD校园开发者</h2>
+            </a>
+            <nav class="nav-links" aria-label="主导航">
+                <a href="#about">关于我们</a>
+                <a href="#benefits">优势福利</a>
+                <a href="#process">申请流程</a>
+                <a href="#apply">立即报名</a>
+            </nav>
+            <!-- 移动端汉堡按钮（展开/收起玻璃面板） -->
+            <button class="burger" id="burger" aria-label="打开菜单" aria-expanded="false">
+                <span></span><span></span>
+            </button>
+        </div>
+    </header>
+
+    <!-- 移动端下拉玻璃面板 -->
+    <div class="m-panel" id="mPanel">
+        <a href="#about">关于我们</a>
+        <a href="#benefits">优势福利</a>
+        <a href="#process">申请流程</a>
+        <a href="#apply">立即报名</a>
+    </div>
+
+    <!-- 英雄区域：背景图视差 + 辉光 + 漂浮光斑 + 三段错峰入场 -->
+    <section class="hero" id="top">
+        <img class="hero-bg" id="heroBg" src="./img/top.jpg" alt="">
+        <div class="hero-veil"></div>
+        <div class="hero-glow"></div>
+        <span class="orb o1"></span><span class="orb o2"></span><span class="orb o3"></span>
+        <div class="hero-inner">
+            <h2 class="rise d1">探索前沿技术，<span class="grad-text">开启无限可能</span></h2>
+            <p class="rise d2">加入山东管理学院HSD组织，与志同道合的伙伴一起，将创意转化为现实，成为未来的技术领袖！</p>
+            <div class="rise d3">
+                <a href="#apply" class="cta">
+                    立即申请
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                </a>
+            </div>
+        </div>
+        <div class="cue" aria-hidden="true"></div>
+    </section>
+
+    <!-- 关于HSD：3 张动态 SVG 图标卡 + 渐变相框轮播 -->
+    <section id="about" class="sec sec-about">
+        <div class="wrap">
+            <div class="sec-head" data-reveal>
+                <div class="bar"></div>
+                <h2>关于HSD计划</h2>
+                <p>华为HSD（Huawei Student Developers）校园组织是华为公司面向高校学子打造的高规格人才发展计划，
+                旨在发掘和培养具有创新意识和技术领导力的青年学生。入选者将获得华为提供的独家技术培训、项目实践机会和行业资源支持，
+                这种经历含金量高、竞争力强，是广大学生群体向往的高层次成长平台。</p>
+            </div>
+            <div class="cards">
+                <!-- 卡片一：原子轨道图标 —— 椭圆轨道持续旋转，卫星点随之公转 -->
+                <div class="card tilt" data-reveal style="--d:.05s">
+                    <span class="shine"></span>
+                    <div class="icon-orb">
+                        <svg class="ig" viewBox="0 0 24 24" aria-hidden="true">
+                            <circle cx="12" cy="12" r="2.2" fill="url(#gA)" stroke="none"/>
+                            <g class="an-spin">
+                                <ellipse cx="12" cy="12" rx="9" ry="3.8" stroke="url(#gA)"/>
+                                <ellipse cx="12" cy="12" rx="9" ry="3.8" stroke="url(#gB)" transform="rotate(60 12 12)"/>
+                                <ellipse cx="12" cy="12" rx="9" ry="3.8" stroke="url(#gA)" transform="rotate(120 12 12)"/>
+                            </g>
+                            <circle cx="21" cy="12" r="1.2" fill="url(#gB)" stroke="none"/>
+                        </svg>
+                    </div>
+                    <h3>探索前沿技术</h3>
+                    <p>抢先体验鸿蒙OS最新功能，参与开发者内测，与华为技术大咖面对面交流。</p>
+                </div>
+                <!-- 卡片二：终端图标 —— 光标闪烁 + 底部虚线流动，模拟代码书写 -->
+                <div class="card tilt" data-reveal style="--d:.15s">
+                    <span class="shine"></span>
+                    <div class="icon-orb">
+                        <svg class="ig" viewBox="0 0 24 24" aria-hidden="true">
+                            <rect x="3" y="5" width="18" height="14" rx="2.5" stroke="url(#gA)"/>
+                            <path d="M5.5 9h2" stroke="url(#gB)"/>
+                            <path d="M5.5 12l2 1.5-2 1.5" stroke="url(#gA)"/>
+                            <path d="M10 15h5" stroke="url(#gB)"/>
+                            <path class="an-blink" d="M15.5 15h.01" stroke="url(#gB)" stroke-width="2.2" stroke-linecap="round"/>
+                        </svg>
+                    </div>
+                    <h3>提升实践技能</h3>
+                    <p>参与各种实践项目，将理论知识运用到实际中，真正提升自己的能力。</p>
+                </div>
+                <!-- 卡片三：网络节点图标 —— 连线虚线流动 + 节点星芒明灭 -->
+                <div class="card tilt" data-reveal style="--d:.25s">
+                    <span class="shine"></span>
+                    <div class="icon-orb">
+                        <svg class="ig" viewBox="0 0 24 24" aria-hidden="true">
+                            <g stroke="url(#gA)">
+                                <circle cx="12" cy="12" r="3.5"/>
+                                <line x1="12" y1="8.5" x2="12" y2="4.5"/>
+                                <line x1="12" y1="15.5" x2="12" y2="19.5"/>
+                                <line x1="8.5" y1="12" x2="4.5" y2="12"/>
+                                <line x1="15.5" y1="12" x2="19.5" y2="12"/>
+                            </g>
+                            <g class="an-twinkle" fill="url(#gB)" stroke="none">
+                                <circle cx="4.5" cy="12" r="1.2"/>
+                                <circle cx="19.5" cy="12" r="1.2"/>
+                                <circle cx="12" cy="4.5" r="1.2"/>
+                                <circle cx="12" cy="19.5" r="1.2"/>
+                            </g>
+                        </svg>
+                    </div>
+                    <h3>共建开发者生态</h3>
+                    <p>与全国高校开发者交流互动，共同探讨技术发展方向，构建强大的开发者社区。</p>
+                </div>
+            </div>
+
+            <!-- 轮播图：渐变描边相框 + 交叉淡化 + Ken Burns 缓推 -->
+            <div class="car-wrap" data-reveal="zoom" style="--d:.1s">
+                <div class="carousel" id="carousel">
+                    <img class="on" src="./img/hw01.jpg" alt="">
+                    <img src="./img/hw02.jpg" alt="">
+                    <img src="./img/hw03.jpg" alt="">
+                    <img src="./img/hw04.jpg" alt="">
+                    <img src="./img/hw05.jpg" alt="">
+                    <img src="./img/hw06.jpg" alt="">
+                    <img src="./img/hw07.jpg" alt="">
+                    <div class="car-shade"></div>
+                    <button class="car-btn prev" id="carPrev" aria-label="上一张">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>
+                    </button>
+                    <button class="car-btn next" id="carNext" aria-label="下一张">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+                    </button>
+                    <div class="car-dots" id="carDots"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 加入我们的好处：6 张福利卡 -->
+    <section id="benefits" class="sec sec-benefits">
+        <div class="wrap">
+            <div class="sec-head" data-reveal>
+                <div class="bar"></div>
+                <h2>加入HSD的独特价值</h2>
+                <p>成为HSD成员，你将获得以下专属福利和发展机会</p>
+            </div>
+            <div class="cards">
+                <!-- 火箭图标：虚线航迹持续流动 -->
+                <div class="card tilt" data-reveal style="--d:.05s">
+                    <span class="shine"></span>
+                    <div class="icon-orb">
+                        <svg class="ig" viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M12 4c2.5 1.8 4 4.5 4 8l-2 2h-4L8 12c0-3.5 1.5-6.2 4-8Z" stroke="url(#gA)"/>
+                            <circle cx="12" cy="10" r="1.4" stroke="url(#gB)"/>
+                            <path d="M10 14l-1.5 3M14 14l1.5 3" stroke="url(#gB)"/>
+                            <g class="an-dash" stroke="url(#gA)">
+                                <path d="M6 20c1.5-1 3-1 6 0s4.5 1 6 0"/>
+                            </g>
+                        </svg>
+                    </div>
+                    <h3>职业发展加速</h3>
+                    <p>表现优秀的成员将有机会获得华为校园招聘绿色通道，为你的职业发展打下坚实基础。</p>
+                </div>
+                <!-- 课程图标：播放键呼吸缩放 -->
+                <div class="card tilt" data-reveal style="--d:.13s">
+                    <span class="shine"></span>
+                    <div class="icon-orb">
+                        <svg class="ig" viewBox="0 0 24 24" aria-hidden="true">
+                            <rect x="3" y="5" width="18" height="13" rx="2.5" stroke="url(#gA)"/>
+                            <path d="M9 20h6" stroke="url(#gB)"/>
+                            <g class="an-pop"><path d="M10.5 9.5v5l4.5-2.5Z" fill="url(#gB)" stroke="none"/></g>
+                        </svg>
+                    </div>
+                    <h3>前沿技术课程</h3>
+                    <p>定期邀请华为技术专家和行业大咖，带来前沿技术课程和精彩讲座，了解最新技术趋势。</p>
+                </div>
+                <!-- 人脉图标：连线流动 + 中心节点明灭 -->
+                <div class="card tilt" data-reveal style="--d:.21s">
+                    <span class="shine"></span>
+                    <div class="icon-orb">
+                        <svg class="ig" viewBox="0 0 24 24" aria-hidden="true">
+                            <circle cx="12" cy="6.5" r="2" stroke="url(#gB)"/>
+                            <circle cx="5.5" cy="17" r="2" stroke="url(#gA)"/>
+                            <circle cx="18.5" cy="17" r="2" stroke="url(#gB)"/>
+                            <g class="an-dash" stroke="url(#gA)">
+                                <line x1="10.5" y1="8" x2="7" y2="15.5"/>
+                                <line x1="13.5" y1="8" x2="17" y2="15.5"/>
+                                <line x1="7" y1="17" x2="17" y2="17"/>
+                            </g>
+                        </svg>
+                    </div>
+                    <h3>丰富的人脉资源</h3>
+                    <p>与来自不同专业、不同背景的优秀校园极客精英一起学习、交流、合作，拓宽人脉网络。</p>
+                </div>
+                <!-- 奖牌图标：星形居中 + 虚线光环慢速旋转 -->
+                <div class="card tilt" data-reveal style="--d:.05s">
+                    <span class="shine"></span>
+                    <div class="icon-orb">
+                        <svg class="ig" viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M9 3h6l-2 4.5h-2Z" stroke="url(#gA)"/>
+                            <g class="an-spin-slow">
+                                <circle cx="12" cy="14.5" r="5" stroke="url(#gB)" stroke-dasharray="2.5 3"/>
+                            </g>
+                            <path d="M12 11.5l.8 1.6 1.8.25-1.3 1.25.3 1.8-1.6-.85-1.6.85.3-1.8L8.5 13.35l1.8-.25Z" fill="url(#gA)" stroke="none"/>
+                        </svg>
+                    </div>
+                    <h3>荣誉认证奖励</h3>
+                    <p>参与活动和项目，表现出色的同学将有机会获得荣誉证书与丰厚奖励，为简历增添闪光点。</p>
+                </div>
+                <!-- 齿轮组图标：双环反向旋转，模拟联动 -->
+                <div class="card tilt" data-reveal style="--d:.13s">
+                    <span class="shine"></span>
+                    <div class="icon-orb">
+                        <svg class="ig" viewBox="0 0 24 24" aria-hidden="true">
+                            <g class="an-spin-slow">
+                                <circle cx="9" cy="9" r="3.5" stroke="url(#gA)" stroke-dasharray="2 2"/>
+                                <circle cx="9" cy="9" r="1.3" fill="url(#gA)" stroke="none"/>
+                            </g>
+                            <g class="an-spin-rev">
+                                <circle cx="15.5" cy="15" r="2.8" stroke="url(#gB)" stroke-dasharray="1.6 1.7"/>
+                                <circle cx="15.5" cy="15" r="1" fill="url(#gB)" stroke="none"/>
+                            </g>
+                        </svg>
+                    </div>
+                    <h3>实践项目机会</h3>
+                    <p>参与华为相关的实践项目，运用所学知识解决实际问题，有机会将你的创意变成现实产品。</p>
+                </div>
+                <!-- 礼盒图标：蝴蝶结 + 四角星芒闪烁 -->
+                <div class="card tilt" data-reveal style="--d:.21s">
+                    <span class="shine"></span>
+                    <div class="icon-orb">
+                        <svg class="ig" viewBox="0 0 24 24" aria-hidden="true">
+                            <rect x="4.5" y="9.5" width="15" height="10" rx="1.8" stroke="url(#gA)"/>
+                            <path d="M4.5 13.5h15M12 9.5v10" stroke="url(#gB)"/>
+                            <path d="M12 9.5C10.5 9.5 8.5 9.2 8.5 7.5S10.5 5.5 11.5 6.8C12 7.5 12.5 7.5 12.5 7.5C13.5 5.5 15.5 5.5 15.5 7.5S13.5 9.5 12 9.5Z" stroke="url(#gA)"/>
+                            <g class="an-twinkle" stroke-width="1.5">
+                                <path d="M19 4v2M18 5h2" stroke="url(#gB)"/>
+                                <path d="M5 3.5v1.5M4.2 4.3h1.6" stroke="url(#gA)"/>
+                            </g>
+                        </svg>
+                    </div>
+                    <h3>专属资源支持</h3>
+                    <p>获得专属培训课程、限量开发套件、活动基金支持，甚至有机会直通华为实习通道。</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 招募对象 -->
+    <section class="sec">
+        <div class="wrap">
+            <div class="sec-head" data-reveal>
+                <div class="bar"></div>
+                <h2>我们寻找这样的你</h2>
+                <p>无论你的年级专业如何，只要你对未来有热情，都欢迎加入我们</p>
+            </div>
+            <div class="cards">
+                <div class="card center tilt" data-reveal style="--d:.05s">
+                    <span class="shine"></span>
+                    <div class="icon-orb">
+                        <svg class="ig" viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M9 6L5 12l4 6" stroke="url(#gA)"/>
+                            <path d="M15 6l4 6-4 6" stroke="url(#gA)"/>
+                            <path class="an-blink" d="M12.5 6l-2 12" stroke="url(#gB)" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                    </div>
+                    <h3>技术爱好者</h3>
+                    <p>热爱技术学习，创新探索和技术交流，具备一定的技术能力或项目经验。</p>
+                </div>
+                <div class="card center tilt" data-reveal style="--d:.15s">
+                    <span class="shine"></span>
+                    <div class="icon-orb">
+                        <svg class="ig" viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M5 10v4l3 .6L12 18V6L8 9.4Z" stroke="url(#gA)"/>
+                            <g class="an-wave" transform-origin="15 12">
+                                <path d="M16 9.5a3.5 3.5 0 0 1 0 5" stroke="url(#gB)"/>
+                            </g>
+                            <path d="M18 7.5a6.5 6.5 0 0 1 0 9" stroke="url(#gA)"/>
+                        </svg>
+                    </div>
+                    <h3>校园活动家</h3>
+                    <p>有发声传播能力，掌握宣传技能，熟悉推广策划，具备校园活动经历。</p>
+                </div>
+                <div class="card center tilt" data-reveal style="--d:.25s">
+                    <span class="shine"></span>
+                    <div class="icon-orb">
+                        <svg class="ig" viewBox="0 0 24 24" aria-hidden="true">
+                            <rect x="7.5" y="3.5" width="9" height="17" rx="2.2" stroke="url(#gA)"/>
+                            <path d="M10.5 18h3" stroke="url(#gB)"/>
+                            <g class="an-pop"><path d="M12 7l.7 1.5 1.7.2-1.2 1.15.3 1.7-1.5-.8-1.5.8.3-1.7L9.6 8.7l1.7-.2Z" fill="url(#gB)" stroke="none"/></g>
+                        </svg>
+                    </div>
+                    <h3>产品体验官</h3>
+                    <p>最新最潮的互联网达人、数码爱好者，具备较强的体验能力与表达能力。</p>
+                </div>
+            </div>
+            <p class="note" data-reveal style="--d:.15s">无需担心技术门槛！HSD专注校园开发者培养，为认同华为的你提供成长机会。</p>
+        </div>
+    </section>
+
+    <!-- 申请流程：滚动生长时间轴 -->
+    <section id="process" class="sec sec-process">
+        <div class="wrap">
+            <div class="sec-head" data-reveal>
+                <div class="bar"></div>
+                <h2>申请流程与时间安排</h2>
+                <p>简单几步，即可加入HSD大家庭</p>
+            </div>
+            <div class="timeline" id="tl">
+                <div class="tl-track">
+                    <div class="tl-fill" id="tlFill"></div>
+                    <div class="tl-head" id="tlHead"></div>
+                </div>
+                <div class="tl-item" data-reveal="left">
+                    <span class="tl-node"></span>
+                    <div class="tl-card">
+                        <span class="tl-date">第一步：10月13日 - 10月17日</span>
+                        <h3>填写报名表</h3>
+                        <p>加入QQ群，群备注"年级-专业-姓名-学号"。</p>
+                    </div>
+                </div>
+                <div class="tl-item" data-reveal="right">
+                    <span class="tl-node"></span>
+                    <div class="tl-card">
+                        <span class="tl-date">第二步：10月17日 - 10月20日</span>
+                        <h3>官网报名</h3>
+                        <p>访问华为开发者联盟官网完成HSD成员在线申请并提交简历。</p>
+                    </div>
+                </div>
+                <div class="tl-item" data-reveal="left">
+                    <span class="tl-node"></span>
+                    <div class="tl-card">
+                        <span class="tl-date">第三步：10月20日 - 10月23日</span>
+                        <h3>简历筛选</h3>
+                        <p>我们将对收到的简历进行筛选，符合要求的同学将进入面试环节。</p>
+                    </div>
+                </div>
+                <div class="tl-item" data-reveal="right">
+                    <span class="tl-node"></span>
+                    <div class="tl-card">
+                        <span class="tl-date">第四步：10月23日 - 10月25日</span>
+                        <h3>面试</h3>
+                        <p>主要考察加入组织意向、创新思维、团队合作精神等</p>
+                    </div>
+                </div>
+                <div class="tl-item" data-reveal="left">
+                    <span class="tl-node"></span>
+                    <div class="tl-card">
+                        <span class="tl-date">第五步：10月27日</span>
+                        <h3>确认入选</h3>
+                        <p>面试通过的同学将收到正式的入选offer，欢迎成为山东管理学院HSD的一员。后期颁发对应证书</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 报名区：极光旋转环二维码 + 漂浮粒子 -->
+    <section id="apply" class="sec">
+        <div class="wrap">
+            <div class="sec-head" data-reveal>
+                <div class="bar"></div>
+                <h2>立即扫码加入HSD</h2>
+                <p>扫码加入QQ群，等待后期面试</p>
+            </div>
+            <div class="qr-stage" data-reveal="zoom">
+                <div class="qr-field">
+                    <div class="aurora"></div>
+                    <div class="qr-particles" id="qrParticles"></div>
+                    <div class="qr-halo">
+                        <div class="qr-card">
+                            <div class="qr-frame">
+                                <b></b><b></b><b></b><b></b>
+                                <img src="./img/bottom3.jpg" alt="">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 页脚 -->
+    <footer>
+        <!-- 星空点缀：微小四芒星 -->
+        <div class="stars" aria-hidden="true">
+            <i style="--sx:8%;--sy:26%;--sz:9px;--sd:3.2s;--sdl:-.6s"></i>
+            <i style="--sx:17%;--sy:64%;--sz:7px;--sd:2.6s;--sdl:-1.8s"></i>
+            <i style="--sx:27%;--sy:15%;--sz:11px;--sd:3.8s;--sdl:-2.4s"></i>
+            <i style="--sx:41%;--sy:48%;--sz:8px;--sd:2.2s;--sdl:-.9s"></i>
+            <i style="--sx:56%;--sy:11%;--sz:10px;--sd:3.5s;--sdl:-1.1s"></i>
+            <i style="--sx:63%;--sy:60%;--sz:7px;--sd:4.2s;--sdl:-3.1s"></i>
+            <i style="--sx:76%;--sy:24%;--sz:9px;--sd:2.9s;--sdl:-.3s"></i>
+            <i style="--sx:87%;--sy:54%;--sz:12px;--sd:3.6s;--sdl:-2s"></i>
+            <i style="--sx:94%;--sy:82%;--sz:8px;--sd:4.6s;--sdl:-1.5s"></i>
+            <i style="--sx:34%;--sy:80%;--sz:6px;--sd:2.4s;--sdl:-.2s"></i>
+        </div>
+        <div class="wrap">
+            <div class="f-grid">
+                <div class="footer-section">
+                    <h3>关于HSD</h3>
+                    <p>华为HSD（HUAWEI Student Developers）是由华为开发者联盟支持的校园开发者组织，
+                    致力于帮助校园开发者探索前沿技术、提升实践技能。</p>
+                </div>
+                <div class="footer-section">
+                    <h3>快速链接</h3>
+                    <ul class="f-links">
+                        <li><a href="#about">关于我们</a></li>
+                        <li><a href="#benefits">优势福利</a></li>
+                        <li><a href="#process">申请流程</a></li>
+                        <li><a href="#apply">立即报名</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h3>联系我们</h3>
+                    <ul class="f-links">
+                        <li>邮箱: 784298473@qq.com</li>
+                        <li>官网: https://developer.huawei.com</li>
+                        <li>微信: 华为开发者联盟</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="f-bottom">
+                <p>© 山东管理学院HSD组织. 保留所有权利.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- 星球彩蛋（隐藏）：滚动到报名区后浮现 -->
+    <div class="planet-egg" id="planetEgg" aria-hidden="true">
+        <div class="planet-orbit">
+            <div class="planet-body">
+                <span class="p-spot s1"></span>
+                <span class="p-spot s2"></span>
+                <span class="p-spot s3"></span>
+                <span class="p-spot s4"></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 星球彩蛋模式：全屏小游戏（跃迁进入） -->
+    <div class="egg-mode" id="eggMode" aria-hidden="true">
+        <canvas id="eggCanvas"></canvas>
+        <div class="egg-ui">
+            <div class="egg-hud hidden" id="eggHud">
+                <span class="hud-score">分数 <b id="eggScore">0</b></span>
+                <span class="hud-dist">距离 <b id="eggDist">0</b> m</span>
+            </div>
+            <button class="egg-btn egg-back" id="eggBack" type="button" aria-label="返回网页">
+                <svg viewBox="0 0 24 24"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>
+            </button>
+            <button class="egg-btn egg-start" id="eggStart" type="button" aria-label="开始游戏">
+                <svg viewBox="0 0 24 24"><path d="M8 5.5v13l11-6.5z"/></svg>
+            </button>
+            <div class="egg-hint" id="eggHint">点击开始，探索星球</div>
+        </div>
+    </div>
+
+    <!-- ================================================================
+    小助手组件（悬浮快捷导航）—— 集成在页面底部
+    ================================================================ -->
+    <style>
+        /* 小助手专用样式（与主站隔离，仅作用于 .assistant 命名空间） */
+        .assistant,
+        .assistant *,
+        .assistant *::before,
+        .assistant *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --ast-radius: 999px;
+            --ast-ease: cubic-bezier(.22, .8, .28, 1);
+            --ast-duration: 0.55s;
+            --ast-main-size: 54px;
+            --ast-option-size: 46px;
+            --ast-ring-radius: 80px;
+            --ast-shadow: 0 6px 24px rgba(8, 20, 48, .14), 0 2px 8px rgba(8, 20, 48, .06);
+            --ast-shadow-hover: 0 10px 36px rgba(8, 20, 48, .22), 0 4px 14px rgba(8, 20, 48, .08);
+        }
+
+        .assistant {
+            position: fixed;
+            right: auto;
+            left: 0;   /* left/top 由 JS 拖动与吸附逻辑控制 */
+            top: 58%;
+            z-index: 1600;
+            width: var(--ast-main-size);
+            height: var(--ast-main-size);
+            transition: left var(--ast-duration) var(--ast-ease),
+                        top var(--ast-duration) var(--ast-ease);
+            overflow: visible;
+            touch-action: none;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* 展开时按钮位移由 JS 控制（按停靠侧移出半掩区，供选项环展开） */
+
+        /* 主按钮 —— 含脸部设计 */
+        .assistant .main-btn {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            border: none;
+            border-radius: var(--ast-radius);
+            background: rgba(255, 255, 255, .82);
+            backdrop-filter: blur(14px) saturate(1.4);
+            -webkit-backdrop-filter: blur(14px) saturate(1.4);
+            box-shadow: var(--ast-shadow), inset 0 0 0 0.6px rgba(255, 255, 255, .7);
+            cursor: pointer;
+            display: grid;
+            place-items: center;
+            transition: transform var(--ast-duration) var(--ast-ease),
+                        box-shadow var(--ast-duration) var(--ast-ease),
+                        background var(--ast-duration) var(--ast-ease);
+            will-change: transform;
+            padding: 0;
+        }
+
+        .assistant .main-btn:hover {
+            box-shadow: var(--ast-shadow-hover), inset 0 0 0 0.6px rgba(255, 255, 255, .8);
+            background: rgba(255, 255, 255, .92);
+        }
+
+        .assistant.open .main-btn {
+            transform: scale(1.2);
+            box-shadow: var(--ast-shadow-hover), inset 0 0 0 0.6px rgba(255, 255, 255, .8);
+            background: rgba(255, 255, 255, .94);
+        }
+
+        /* 脸部容器 —— 相对于主按钮居中 */
+        .assistant .face {
+            position: relative;
+            width: 70%;
+            height: 70%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 22%;
+            pointer-events: none; /* 让点击穿透给主按钮 */
+        }
+
+        /* 单只眼睛 */
+        .assistant .eye {
+            width: 14%;
+            height: 38%;
+            background: #1a2744;
+            border-radius: 2px;
+            transition: transform 0.06s ease, height 0.15s ease, background 0.3s;
+            transform: translate(0, 0);
+            will-change: transform, height;
+            flex-shrink: 0;
+        }
+
+        /* 眨眼动画 —— 通过 JS 动态添加 .blink 类 */
+        .assistant .eye.blink {
+            height: 6% !important;
+            background: #1a2744;
+            transition: height 0.08s ease;
+        }
+
+        /* 选项容器 & 选项按钮（与原设计一致） */
+        .assistant .options-wrap {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+        }
+
+        .assistant .option {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            width: var(--ast-option-size);
+            height: var(--ast-option-size);
+            margin-left: calc(var(--ast-option-size) / -2);
+            margin-top: calc(var(--ast-option-size) / -2);
+            border: none;
+            border-radius: var(--ast-radius);
+            background: rgba(255, 255, 255, .78);
+            backdrop-filter: blur(12px) saturate(1.3);
+            -webkit-backdrop-filter: blur(12px) saturate(1.3);
+            box-shadow: var(--ast-shadow), inset 0 0 0 0.6px rgba(255, 255, 255, .65);
+            cursor: pointer;
+            display: grid;
+            place-items: center;
+            padding: 10px;
+            pointer-events: none;
+            transform: translate(0, 0) scale(0.5);
+            opacity: 0;
+            transition:
+                transform var(--ast-duration) var(--ast-ease),
+                opacity var(--ast-duration) var(--ast-ease),
+                box-shadow var(--ast-duration) var(--ast-ease),
+                background var(--ast-duration) var(--ast-ease);
+            will-change: transform, opacity;
+            overflow: hidden;
+        }
+
+        .assistant.open .option {
+            transform: translate(var(--tx), var(--ty)) scale(1);
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .assistant .option:hover {
+            background: rgba(255, 255, 255, .94);
+            box-shadow: var(--ast-shadow-hover), inset 0 0 0 0.6px rgba(255, 255, 255, .8);
+            transform: translate(var(--tx), var(--ty)) scale(1.08);
+        }
+
+        .assistant .option svg {
+            width: 22px;
+            height: 22px;
+            display: block;
+            color: #1a2744;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            transition: transform 0.3s var(--ast-ease);
+        }
+
+        .assistant .option:hover svg {
+            transform: scale(1.12);
+        }
+
+        .assistant .option .tip {
+            position: absolute;
+            right: calc(100% + 14px);
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(12, 20, 44, .8);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            color: #fff;
+            font-size: 12px;
+            font-weight: 500;
+            padding: 4px 12px;
+            border-radius: 6px;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.25s ease, transform 0.25s ease;
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+            letter-spacing: .02em;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, .18);
+        }
+
+        .assistant .option .tip::after {
+            content: '';
+            position: absolute;
+            right: -6px;
+            top: 50%;
+            transform: translateY(-50%);
+            border: 6px solid transparent;
+            border-left-color: rgba(12, 20, 44, .8);
+        }
+
+        .assistant .option:hover .tip {
+            opacity: 1;
+            transform: translateY(-50%) translateX(-2px);
+        }
+
+        /* 响应式适配 */
+        @media (max-width: 768px) {
+            :root {
+                --ast-main-size: 46px;
+                --ast-option-size: 40px;
+                --ast-ring-radius: 68px;
+            }
+            .assistant {
+                top: 62%;
+            }
+            .assistant .option svg {
+                width: 18px;
+                height: 18px;
+            }
+            .assistant .option .tip {
+                display: none;
+            }
+            /* 展开位移统一由 JS 按停靠侧计算（右侧左移 / 左侧右移），
+               不再叠加 CSS transform，避免左侧停靠展开时选项环向左溢出屏幕 */
+            .assistant .face {
+                gap: 18%;
+            }
+        }
+
+        @media (max-width: 420px) {
+            :root {
+                --ast-main-size: 40px;
+                --ast-option-size: 36px;
+                --ast-ring-radius: 58px;
+            }
+            .assistant .option svg {
+                width: 16px;
+                height: 16px;
+            }
+            .assistant .face {
+                gap: 14%;
+            }
+        }
+
+        /* 触屏设备：悬浮球默认停靠更低（避开 Hero CTA 与关键内容），
+           眼睛跟随已在 JS 侧按 (hover:hover) and (pointer:fine) 条件禁用 */
+        @media (hover: none) and (pointer: coarse) {
+            .assistant {
+                top: 78%;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .assistant,
+            .assistant .main-btn,
+            .assistant .option {
+                transition-duration: 0.01ms !important;
+            }
+            .assistant .eye {
+                transition-duration: 0.01ms !important;
+            }
+        }
+    </style>
+
+    <!-- ================================================================
+         AI 对话窗口样式（独立块：回滚时删除本 style 块即可）
+         ================================================================ -->
+    <style>
+        /* AI 对话期间锁滚动（与彩蛋模式 body 锁滚动写法一致） */
+        body.ai-mode { overflow: hidden !important; }
+
+        /* AI 模式：小助手球体提升层级，压在窗口出线点上 */
+        body.ai-mode .assistant { z-index: 1800; }
+
+        /* —— 窗口容器：纯白背景；宽高自适应视口（桌面 480x650，小窗按 vw/vh 收缩并居中，任何视口不溢出） —— */
+        .ai-chat {
+            position: fixed;
+            left: 50%;
+            top: 50%;
+            width: min(480px, 92vw);
+            height: min(650px, 82vh);
+            margin-left: 0;
+            transform: translate(-50%, -50%) translateZ(0);
+            z-index: 1700;
+            border-radius: 18px;
+            overflow: hidden;
+            background: #fff;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity .15s ease, visibility .15s ease;
+            will-change: opacity;
+            box-shadow: 0 28px 72px rgba(8, 20, 48, .24), 0 10px 28px rgba(8, 20, 48, .12);
+        }
+        .ai-chat.open { opacity: 1; visibility: visible; }
+
+        /* —— 线框勾勒（SVG 路径） —— */
+        .ai-outline {
+            position: absolute;
+            inset: -4px;
+            width: calc(100% + 8px);
+            height: calc(100% + 8px);
+            pointer-events: none;
+            overflow: visible;
+        }
+        .ai-line {
+            fill: none;
+            stroke: url(#aiGrad);
+            stroke-width: 2.5;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            opacity: 0;
+        }
+        .ai-chat.open .ai-line { opacity: 1; }
+        .ai-line.drawing { animation: aiDraw 1.6s ease forwards; }
+        @keyframes aiDraw { to { stroke-dashoffset: 0; } }
+
+        /* —— 内容层（填充完成后淡入） —— */
+        .ai-body {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            opacity: 0;
+            transition: opacity .25s ease .05s;
+        }
+        .ai-chat.ready .ai-body { opacity: 1; }
+
+        .ai-close {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 5;
+            width: 32px;
+            height: 32px;
+            border: none;
+            border-radius: 50%;
+            background: rgba(15, 25, 60, .06);
+            color: #33406b;
+            font-size: 15px;
+            line-height: 1;
+            cursor: pointer;
+            display: grid;
+            place-items: center;
+            transition: background .2s ease, transform .2s ease;
+        }
+        .ai-close:hover { background: rgba(15, 25, 60, .12); transform: rotate(90deg); }
+
+        .ai-head {
+            display: flex;
+            align-items: flex-end;
+            gap: 10px;
+            padding: 18px 16px 10px;
+        }
+        .ai-avatar {
+            flex: 0 0 38px;
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #2e63f6, #7b5cff 55%, #19c8f5);
+            box-shadow: 0 4px 12px rgba(60, 90, 240, .35);
+            display: grid;
+            place-items: center;
+            color: #fff;
+        }
+        .ai-avatar svg {
+            width: 22px;
+            height: 22px;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 1.8;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+        .ai-greet {
+            max-width: 78%;
+            background: #f4f7ff;
+            border: 1px solid rgba(120, 150, 235, .22);
+            border-radius: 14px 14px 14px 4px;
+            padding: 10px 13px;
+            font-size: 14px;
+            line-height: 1.55;
+            color: #26304f;
+            box-shadow: 0 4px 14px rgba(30, 50, 120, .06);
+            transform: translateX(-16px);
+            opacity: 0;
+            transition: transform .35s cubic-bezier(.2, .8, .2, 1) .05s, opacity .3s ease .05s;
+        }
+        .ai-chat.ready .ai-greet { transform: translateX(0); opacity: 1; }
+
+        .ai-log {
+            flex: 1;
+            overflow-y: auto;
+            padding: 6px 16px 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            -webkit-overflow-scrolling: touch;
+        }
+        .ai-msg {
+            align-self: flex-end;
+            max-width: 82%;
+            background: linear-gradient(135deg, #3b6df6, #6b5cf8);
+            color: #fff;
+            border-radius: 14px 14px 4px 14px;
+            padding: 10px 13px;
+            font-size: 14px;
+            line-height: 1.5;
+            box-shadow: 0 4px 14px rgba(50, 90, 240, .28);
+            opacity: 0;
+            transform: translateY(10px);
+            animation: aiMsgIn .3s cubic-bezier(.2, .8, .2, 1) forwards;
+        }
+        @keyframes aiMsgIn { to { opacity: 1; transform: translateY(0); } }
+
+        /* AI 助手回复（左对齐浅色气泡），与用户消息区分 */
+        .ai-msg.bot {
+            align-self: flex-start;
+            background: #f4f7ff;
+            border: 1px solid rgba(120, 150, 235, .22);
+            color: #26304f;
+            border-radius: 14px 14px 14px 4px;
+            box-shadow: 0 4px 14px rgba(30, 50, 120, .06);
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+        .ai-msg.bot.error {
+            background: #fff1f1;
+            border-color: rgba(235, 120, 120, .35);
+            color: #a33;
+        }
+        .ai-msg.bot.typing::after {
+            content: '…';
+            display: inline-block;
+            animation: aiDots 1.2s steps(4, end) infinite;
+        }
+        @keyframes aiDots { 0% { content: ''; } 25% { content: '.'; } 50% { content: '..'; } 75% { content: '...'; } }
+
+        .ai-input {
+            display: flex;
+            gap: 8px;
+            align-items: flex-end;
+            padding: 10px 14px calc(12px + env(safe-area-inset-bottom, 0px));
+            background: #fff;
+            border-top: 1px solid rgba(120, 150, 235, .16);
+        }
+        .ai-text {
+            flex: 1;
+            height: 40px;
+            border: 1px solid rgba(120, 150, 235, .3);
+            border-radius: 20px;
+            padding: 0 14px;
+            font-size: 14px;
+            color: #26304f;
+            outline: none;
+            background: #f6f8ff;
+            transition: border-color .2s ease, box-shadow .2s ease, background .2s ease;
+        }
+        .ai-text:focus { border-color: #5b7cf8; background: #fff; box-shadow: 0 0 0 3px rgba(91, 124, 248, .16); }
+        .ai-send {
+            flex: 0 0 auto;
+            height: 40px;
+            min-width: 64px;
+            border: none;
+            border-radius: 20px;
+            background: linear-gradient(135deg, #2e63f6, #7b5cff);
+            color: #fff;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: transform .2s ease, box-shadow .2s ease, opacity .2s ease;
+            box-shadow: 0 4px 12px rgba(60, 90, 240, .3);
+        }
+        .ai-send:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(60, 90, 240, .4); }
+        .ai-send:disabled { opacity: .55; cursor: default; transform: none; }
+
+        /* 移动端 ≤640px：宽度贴近屏幕（留 14px 边距）、高度 60vh 垂直居中，控件触控高度 ≥44px，safe-area 兜底 */
+        @media (max-width: 640px) {
+            .ai-chat {
+                width: calc(100vw - 28px);
+                height: 60vh;
+            }
+            .ai-text, .ai-send { height: 44px; }
+            .ai-text { border-radius: 22px; padding: 0 16px; font-size: 16px; }
+            .ai-send { min-width: 72px; border-radius: 22px; }
+            .ai-close { width: 38px; height: 38px; top: 8px; right: 8px; font-size: 17px; }
+            .ai-greet, .ai-msg { font-size: 15px; }
+            .ai-avatar { flex-basis: 40px; width: 40px; height: 40px; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .ai-chat,
+            .ai-line,
+            .ai-greet,
+            .ai-body {
+                transition-duration: .01ms !important;
+                animation-duration: .01ms !important;
+            }
+        }
+    </style>
+
+    <!-- ================================================================
+         弹簧挂件样式（独立块：回滚时删除本 style 块即可）
+         ================================================================ -->
+    <style>
+        /* 弹簧挂件系统（独立块：回滚时删除本 style 块即可）
+           重构 v2：容器随导航 fixed，挂在导航栏下边缘下方横向一行，
+                   四根弹簧按 JS 动态对齐 .nav-links 四个链接，自然长度左→右 50/80/110/140 */
+        .spring-row {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            height: 0;
+            pointer-events: none;
+            z-index: 1050;
+        }
+        /* 单根弹簧：横排左定位由 JS 按链接中心计算，本块只定尺寸与绘制 */
+        .spring-orn {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 40px;
+            height: 0;
+            pointer-events: none;
+            z-index: 5;
+        }
+        /* 弹簧线圈：SVG 以 transform: scaleY 伸缩（仅合成层，不触发布局抖动） */
+        .spring-orn .coil {
+            position: absolute;
+            left: 50%;
+            top: 0;
+            width: 40px;
+            transform-origin: 50% 0;
+            will-change: transform;
+            overflow: visible;
+            filter: drop-shadow(0 2px 5px rgba(30, 60, 160, .32));
+        }
+        /* 线圈描边两态配色：导航深色态(未滚动)亮色、浅色毛玻璃态(已滚动)深蓝，均保持可见 */
+        .spring-orn .coil path {
+            stroke: rgba(255, 255, 255, .95);
+            transition: stroke .5s var(--ease);
+        }
+        .nav.scrolled .spring-orn .coil path { stroke: #4a63d0; }
+
+        /* 底部挂饰图标：可拖拽，位移用 translateY 跟随弹簧底端 */
+        .spring-orn .weight {
+            position: absolute;
+            left: 50%;
+            width: 40px;
+            height: 40px;
+            transform: translate(-50%, 0);
+            pointer-events: auto;
+            cursor: grab;
+            touch-action: none;
+            user-select: none;
+            -webkit-user-select: none;
+            display: grid;
+            place-items: center;
+            will-change: transform;
+        }
+        .spring-orn .weight:active { cursor: grabbing; }
+        .spring-orn .weight svg {
+            width: 27px;
+            height: 27px;
+            display: block;
+            filter: drop-shadow(0 3px 7px rgba(40, 70, 200, .42));
+        }
+        /* 已滚动浅底：图标加深投影以保证彩色图标可见 */
+        .nav.scrolled .spring-orn .weight svg { filter: drop-shadow(0 3px 7px rgba(40, 70, 200, .6)); }
+
+        @media (max-width: 768px) {
+            /* 移动端导航链接收起为汉堡菜单，隐藏弹簧横排 */
+            .spring-row { display: none; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .spring-orn .coil,
+            .spring-orn .weight {
+                transition: none !important;
+            }
+        }
+    </style>
+
+    <!-- 小助手 HTML 结构 -->
+    <div class="assistant" id="assistant" role="navigation" aria-label="快捷导航">
+        <!-- 主按钮：包含脸部 -->
+        <button class="main-btn" id="mainBtn" aria-label="展开快捷导航" aria-expanded="false">
+            <div class="face">
+                <span class="eye left" id="eyeLeft"></span>
+                <span class="eye right" id="eyeRight"></span>
+            </div>
+        </button>
+        <!-- 选项容器 -->
+        <div class="options-wrap" id="optionsWrap"></div>
+    </div>
+
+    <!-- 小助手 JavaScript -->
+    <script>
+        (function() {
+            'use strict';
+
+            /* ——— SVG 渐变 defs：所有卡片图标的 url(#gA) / url(#gB) 依赖于此 ———
+               这是图标能显示的关键！之前版本缺失此段导致全部图标透明 */
+            const defsSVG = `<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <linearGradient id="gA" x1="0" y1="0" x2="24" y2="24" gradientUnits="userSpaceOnUse">
+      <stop offset="0"   stop-color="#2e63f6"/>
+      <stop offset=".55" stop-color="#7b5cff"/>
+      <stop offset="1"   stop-color="#19c8f5"/>
+    </linearGradient>
+    <linearGradient id="gB" x1="0" y1="24" x2="24" y2="0" gradientUnits="userSpaceOnUse">
+      <stop offset="0"   stop-color="#19c8f5"/>
+      <stop offset="1"   stop-color="#7b5cff"/>
+    </linearGradient>
+  </defs>
+</svg>`;
+            document.body.insertAdjacentHTML('afterbegin', defsSVG);
+
+            /* ================================================================
+                   配置数据：选项的 href、标题、SVG 图标
+                   ================================================================ */
+            const DATA = [{
+                action: 'top',
+                title: '回到顶部',
+                icon: `<svg viewBox="0 0 24 24"><path d="M12 19V5"/><path d="M5 12l7-7 7 7"/></svg>`
+            }, {
+                action: 'bottom',
+                title: '转到底部',
+                icon: `<svg viewBox="0 0 24 24"><path d="M12 5v14"/><path d="M5 12l7 7 7-7"/></svg>`
+            }, {
+                href: '#ai',
+                title: 'AI对话',
+                action: 'ai',
+                icon: `<svg viewBox="0 0 24 24"><path d="M21 11.5a8.5 8.5 0 01-8.5 8.5 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8A8.5 8.5 0 0111.5 3h.5a8.48 8.48 0 018 8v.5z"/><path d="M12 8l1.1 2.5 2.5 1.1-2.5 1.1L12 15.2l-1.1-2.5-2.5-1.1 2.5-1.1z"/></svg>`
+            }, {
+                action: 'none',
+                title: '敬请期待',
+                icon: ''
+            }];
+
+            const RING_RADIUS = getComputedStyle(document.documentElement)
+                .getPropertyValue('--ast-ring-radius')
+                .trim() || '80px';
+            const RADIUS = parseFloat(RING_RADIUS);
+            const ANGLES = [45, 135, 225, 315];
+            const DELAY_STEP = 70;
+            const RING_ANIM_MS = (4 - 1) * DELAY_STEP + 620; // 选项环动画总时长（最大delay+transition+缓冲），期间禁用选项点击
+            let ringUnlockTimer = null;
+
+            const assistant = document.getElementById('assistant');
+            const mainBtn = document.getElementById('mainBtn');
+            const optionsWrap = document.getElementById('optionsWrap');
+            const eyeLeft = document.getElementById('eyeLeft');
+            const eyeRight = document.getElementById('eyeRight');
+
+            let isOpen = false;
+            let optionEls = [];
+
+            /* ---- 工具：计算圆环坐标（环以按钮中心为圆心，无额外平移） ---- */
+            function getPosition(angleDeg) {
+                const rad = angleDeg * Math.PI / 180;
+                return {
+                    tx: (RADIUS * Math.cos(rad)) + 'px',
+                    ty: (RADIUS * Math.sin(rad)) + 'px'
+                };
+            }
+
+            /* ---- 渲染选项 ---- */
+            function renderOptions() {
+                optionsWrap.innerHTML = '';
+                const frag = document.createDocumentFragment();
+
+                DATA.forEach((item, index) => {
+                    const angle = ANGLES[index % ANGLES.length];
+                    const { tx, ty } = getPosition(angle);
+
+                    const btn = document.createElement('button');
+                    btn.className = 'option';
+                    btn.setAttribute('data-index', index);
+                    btn.setAttribute('aria-label', item.title);
+                    btn.style.setProperty('--tx', tx);
+                    btn.style.setProperty('--ty', ty);
+                    btn.innerHTML = item.icon;
+
+                    const tip = document.createElement('span');
+                    tip.className = 'tip';
+                    tip.textContent = item.title;
+                    btn.appendChild(tip);
+
+                    if (item.href) btn.dataset.href = item.href;
+                    btn.dataset.title = item.title;
+                    btn.dataset.action = item.action || '';
+
+                    btn.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        const act = this.dataset.action;
+                        /* AI 对话：不跳锚点，触发独立 AI 对话流程 */
+                        if (act === 'ai') {
+                            if (window.__openAIChat) {
+                                window.__openAIChat();
+                            } else {
+                                closeAssistant();
+                            }
+                            return;
+                        }
+                        /* 回到顶部 / 转到底部：平滑滚动 */
+                        if (act === 'top') {
+                            window.scrollTo({ top: 0, behavior: 'smooth' });
+                        } else if (act === 'bottom') {
+                            window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' });
+                        }
+                        /* action 'none'：空白占位，等待后续新增功能，仅收起选项环 */
+                        closeAssistant();
+                    });
+
+                    frag.appendChild(btn);
+                });
+
+                optionsWrap.appendChild(frag);
+                optionEls = [...optionsWrap.querySelectorAll('.option')];
+            }
+
+            /* ---- 展开 / 收起 ----
+               展开时按钮按停靠侧移出半掩区（右侧左移 / 左侧右移），
+               使选项环能够完整展开，收起时回到半掩停靠位。 */
+            function openAssistant() {
+                if (isOpen) return;
+                isOpen = true;
+                assistant.classList.add('open');
+                ensureTransition();
+                if (dockSide === 'right') {
+                    // 从半掩位滑到完整显示位再展开选项环，避免环越出右缘
+                    assistant.style.left = (window.innerWidth - AST_SIZE - EDGE_RIGHT_GAP - 86) + 'px';
+                } else {
+                    assistant.style.left = (dockLeft + 86) + 'px';
+                }
+                mainBtn.setAttribute('aria-expanded', 'true');
+                optionEls.forEach((el, i) => {
+                    el.style.pointerEvents = 'none'; // 展开动画期间禁用选项点击，避免误触
+                    el.style.transitionDelay = (i * DELAY_STEP) + 'ms';
+                });
+                clearTimeout(ringUnlockTimer);
+                ringUnlockTimer = setTimeout(function() {
+                    optionEls.forEach(el => { el.style.pointerEvents = ''; }); // 动画结束恢复可点
+                }, RING_ANIM_MS);
+                mainBtn.setAttribute('aria-label', '收起快捷导航');
+            }
+
+            function closeAssistant() {
+                if (!isOpen) return;
+                isOpen = false;
+                assistant.classList.remove('open');
+                ensureTransition();
+                assistant.style.left = dockLeft + 'px';
+                mainBtn.setAttribute('aria-expanded', 'false');
+                const len = optionEls.length;
+                optionEls.forEach((el, i) => {
+                    el.style.pointerEvents = 'none'; // 收起动画期间禁止点击选项
+                    el.style.transitionDelay = ((len - 1 - i) * DELAY_STEP) + 'ms';
+                });
+                mainBtn.setAttribute('aria-label', '展开快捷导航');
+            }
+
+            function toggleAssistant() {
+                isOpen ? closeAssistant() : openAssistant();
+            }
+
+            /* ---- 眼睛跟随鼠标（受隐藏内圆约束） ----
+               约束作用于两只眼睛共同的位移向量：鼠标偏移 (tx,ty) 超限时等比缩放，
+               两只眼睛始终使用完全相同的位移，保持同步对称；
+               内圆约束半径 = 隐藏内圆半径 - 眼半高，贴近内圆但不越界。 */
+            let eyeConstraintR = 0; // 共同位移向量的最大长度
+
+            function measureConstraint() {
+                const astSize = parseFloat(getComputedStyle(document.documentElement)
+                    .getPropertyValue('--ast-main-size')) || 54;
+                const innerR = astSize * 0.5 * 0.72;          // 隐藏内圆半径（72% 外轮廓，为眼睛留出边缘距离）
+                const eyeHalfH = astSize * 0.38 * 0.5;        // 眼睛半高
+                eyeConstraintR = Math.max(2, innerR - eyeHalfH);
+            }
+
+            function updateEyes(clientX, clientY) {
+                if (!eyeLeft || !eyeRight) return;
+                /* 以助手中心为基准的局部坐标（-1..1），鼠标在周边移动时响应更明显 */
+                const r = assistant.getBoundingClientRect();
+                const acx = r.left + r.width / 2;
+                const acy = r.top + r.height / 2;
+                const maxR = 150; // 局部作用半径（px），越靠近助手眼睛偏移越大
+                const nx = Math.max(-1, Math.min(1, (clientX - acx) / maxR));
+                const ny = Math.max(-1, Math.min(1, (clientY - acy) / maxR));
+                const maxOffset = 15; // 最大偏移像素（受内圆约束自动截断）
+                let tx = nx * maxOffset;
+                let ty = ny * maxOffset;
+                const dist = Math.sqrt(tx * tx + ty * ty);
+                if (dist > eyeConstraintR && dist > 0) { // 超限等比缩放，两眼的共同位移保持同步
+                    const k = eyeConstraintR / dist;
+                    tx *= k;
+                    ty *= k;
+                }
+                const t = 'translate(' + tx.toFixed(1) + 'px,' + ty.toFixed(1) + 'px)';
+                eyeLeft.style.transform = t;
+                eyeRight.style.transform = t;
+            }
+
+            /* 眼睛跟随仅绑定精确指针设备（鼠标 / 触控板）：
+               触屏设备（hover:none / pointer:coarse）不绑定 mousemove / mouseleave，
+               眼睛保持初始对称状态；小助手其余功能（拖动、展开选项、眨眼）照常保留 */
+            /* AI 对话模式锁：期间禁用拖动与眼睛跟随（由独立 AI 对话脚本置位） */
+            let aiLock = false;
+
+            const hasFinePointer = window.matchMedia &&
+                window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+            if (hasFinePointer) {
+                document.addEventListener('mousemove', function(e) {
+                    if (aiLock) return; // AI 对话模式：暂停眼睛跟随
+                    updateEyes(e.clientX, e.clientY);
+                });
+
+                // 如果鼠标离开视口，眼睛复位
+                document.addEventListener('mouseleave', function() {
+                    if (aiLock) return;
+                    eyeLeft.style.transform = 'translate(0,0)';
+                    eyeRight.style.transform = 'translate(0,0)';
+                });
+            }
+
+            /* ---- 随机眨眼 ---- */
+            function blink() {
+                if (!eyeLeft || !eyeRight) return;
+                eyeLeft.classList.add('blink');
+                eyeRight.classList.add('blink');
+                setTimeout(() => {
+                    eyeLeft.classList.remove('blink');
+                    eyeRight.classList.remove('blink');
+                }, 150);
+                // 下次眨眼间隔 2~6 秒
+                const nextDelay = 2000 + Math.random() * 4000;
+                setTimeout(blink, nextDelay);
+            }
+
+            // 启动眨眼循环（首次延迟 1~3 秒）
+            setTimeout(blink, 1000 + Math.random() * 2000);
+
+            /* ---- 拖动 + 边缘半掩吸附（类苹果悬浮球） ----
+               拖动松手后按按钮中心所在半屏吸附到对应边缘，
+               仅露出部分按钮（半掩），点击展开时先移出半掩区。 */
+            let dockSide = 'right'; // 当前停靠侧：'left' | 'right'
+            let dockLeft = 0;       // 停靠半掩时的 left 值（收起后回到这里）
+            let dragState = null;
+            let wasDragged = false; // 消费拖动后的 click，避免误触展开
+            const AST_SIZE = parseFloat(getComputedStyle(document.documentElement)
+                .getPropertyValue('--ast-main-size')) || 54;
+            const EDGE_RATIO = 0.44;   // 边缘半掩隐藏比例：左缘 left=-size*ratio；右缘对称露出 (1-ratio)
+            const EDGE_MARGIN = 8;     // 上下边界留白（px）
+            const EDGE_RIGHT_GAP = 12; // 展开（完整显示）时右缘留白（px）
+
+            function ensureTransition() {
+                assistant.style.transition = 'left var(--ast-duration) var(--ast-ease), top var(--ast-duration) var(--ast-ease)';
+            }
+
+            function computeDockLeft(side) {
+                if (side === 'left') {
+                    return -AST_SIZE * EDGE_RATIO;   // 左边缘半掩：右部露出
+                }
+                // 右边缘半掩：左部露出（与左缘对称，恢复苹果悬浮球式半掩）
+                return window.innerWidth - AST_SIZE * (1 - EDGE_RATIO);
+            }
+
+            function dockTo(side, top) {
+                dockSide = side;
+                dockLeft = computeDockLeft(side);
+                ensureTransition();
+                assistant.style.left = dockLeft + 'px';
+                if (top != null) {
+                    assistant.style.top = top + 'px';
+                }
+            }
+
+            function snapAfterDrag(top) {
+                const rect = assistant.getBoundingClientRect();
+                const cx = rect.left + rect.width / 2;
+                const side = cx < window.innerWidth / 2 ? 'left' : 'right';
+                const topClamped = Math.max(EDGE_MARGIN,
+                    Math.min(window.innerHeight - AST_SIZE - EDGE_MARGIN, top));
+                dockTo(side, topClamped);
+            }
+
+            mainBtn.addEventListener('pointerdown', function(e) {
+                if (aiLock) return; // AI 对话模式：禁止拖动
+                if (e.pointerType === 'mouse' && e.button !== 0) return;
+                if (isOpen) closeAssistant();
+                const rect = assistant.getBoundingClientRect();
+                dragState = {
+                    pointerId: e.pointerId,
+                    startX: e.clientX,
+                    startY: e.clientY,
+                    originLeft: rect.left,
+                    originTop: rect.top,
+                    moved: false
+                };
+                mainBtn.setPointerCapture(e.pointerId);
+            });
+
+            mainBtn.addEventListener('pointermove', function(e) {
+                if (!dragState || e.pointerId !== dragState.pointerId) return;
+                const dx = e.clientX - dragState.startX;
+                const dy = e.clientY - dragState.startY;
+                if (!dragState.moved && (Math.abs(dx) + Math.abs(dy) > 5)) {
+                    dragState.moved = true;
+                    assistant.style.transition = 'none'; // 拖拽跟手，禁用吸附动画
+                }
+                if (dragState.moved) {
+                    assistant.style.left = (dragState.originLeft + dx) + 'px';
+                    assistant.style.top = (dragState.originTop + dy) + 'px';
+                }
+            });
+
+            function endDrag(e) {
+                if (!dragState) return;
+                const wasMoved = dragState.moved;
+                const top = dragState.originTop + (e.clientY - dragState.startY);
+                dragState = null;
+                if (wasMoved) {
+                    wasDragged = true;
+                    snapAfterDrag(top); // 松手即吸附到最近边缘并半掩
+                }
+            }
+
+            mainBtn.addEventListener('pointerup', endDrag);
+            mainBtn.addEventListener('pointercancel', endDrag);
+
+            /* 触屏设备判定：用于初始停靠高度选择（触屏默认更低，避开 Hero CTA） */
+            const isTouchDevice = window.matchMedia &&
+                window.matchMedia('(hover: none), (pointer: coarse)').matches;
+            const DEFAULT_TOP_RATIO = isTouchDevice ? 0.78 : 0.58;
+
+            window.addEventListener('resize', function() {
+                if (dragState || isOpen || aiLock) return;
+                ensureTransition();
+                dockTo(dockSide, parseFloat(assistant.style.top) || (window.innerHeight * DEFAULT_TOP_RATIO));
+            });
+
+            /* ---- 事件绑定 ---- */
+            mainBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                if (aiLock) return; // AI 对话模式：点击球体不触发展开
+                if (wasDragged) { // 拖动结束后的 click 不触发展开
+                    wasDragged = false;
+                    return;
+                }
+                toggleAssistant();
+            });
+
+            document.addEventListener('click', function(e) {
+                if (!isOpen) return;
+                if (!assistant.contains(e.target)) {
+                    closeAssistant();
+                }
+            });
+
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && isOpen) {
+                    closeAssistant();
+                    mainBtn.focus();
+                }
+            });
+
+            /* ---- 初始化 ---- */
+            renderOptions();
+            optionEls.forEach(el => { el.style.transitionDelay = '0ms'; });
+            // 初始停靠右侧半掩（桌面保持视口 58% 高度；触屏下移到 78%，避免遮挡 Hero CTA）
+            dockTo('right', window.innerHeight * DEFAULT_TOP_RATIO);
+            // 计算内圆约束半径
+            measureConstraint();
+            // 眼睛初始状态
+            eyeLeft.style.transform = 'translate(0,0)';
+            eyeRight.style.transform = 'translate(0,0)';
+
+            /* ---- AI 对话模式接口（供独立 AI 对话脚本调用） ---- */
+            window.__assistantCore = {
+                assistant: assistant,
+                setLock: function(v) { aiLock = !!v; },
+                closeOptions: closeAssistant,
+                getDockSide: function() { return dockSide; },
+                getDockLeft: function() { return dockLeft; }
+            };
+        })();
+    </script>
+
+    <script>
+        // ===== 原页面原有的 JS 逻辑（保持不变） =====
+        'use strict';
+        /* ================================================================
+           工具函数
+           ================================================================ */
+        const $  = (s, c = document) => c.querySelector(s);
+        const $$ = (s, c = document) => [...c.querySelectorAll(s)];
+        const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+        /* ================================================================
+           一、统一滚动调度（rAF 节流）
+           ================================================================ */
+        const nav    = $('#nav');
+        const pbar   = $('#pbar');
+        const heroBg = $('#heroBg');
+        const tl       = $('#tl');
+        const tlFill   = $('#tlFill');
+        const tlHead   = $('#tlHead');
+        const tlNodes  = $$('.tl-node');
+
+        let ticking = false;
+        function onFrame() {
+            const y  = window.scrollY;
+            const vh = window.innerHeight;
+
+            nav.classList.toggle('scrolled', y > 24);
+
+            const dh = document.documentElement.scrollHeight - vh;
+            pbar.style.transform = `scaleX(${dh > 0 ? Math.min(1, y / dh) : 0})`;
+
+            if (heroBg && !reduceMotion && y < vh * 1.2) {
+                heroBg.style.transform = `translate3d(0, ${y * 0.25}px, 0)`;
+            }
+
+            if (tl) {
+                const r = tl.getBoundingClientRect();
+                const p = Math.min(1, Math.max(0, (vh * 0.6 - r.top) / r.height));
+                tlFill.style.transform = `scaleY(${p})`;
+                tlHead.style.top = (p * 100) + '%';
+                const endY = r.top + p * r.height;
+                tlNodes.forEach(n => {
+                    const nr = n.getBoundingClientRect();
+                    n.classList.toggle('lit', nr.top + nr.height / 2 <= endY + 6);
+                });
+            }
+            ticking = false;
+        }
+        addEventListener('scroll', () => {
+            if (!ticking) { ticking = true; requestAnimationFrame(onFrame); }
+        }, { passive: true });
+        onFrame();
+
+        /* ================================================================
+           二、滚动入场动画（IntersectionObserver）
+           ================================================================ */
+        const io = new IntersectionObserver(entries => {
+            entries.forEach(en => {
+                if (en.isIntersecting) {
+                    en.target.classList.add('in');
+                    io.unobserve(en.target);
+                }
+            });
+        }, { threshold: 0.16, rootMargin: '0px 0px -36px' });
+
+        $$('[data-reveal]').forEach(el => {
+            el.addEventListener('animationend', () => {
+                el.style.animation = 'none';
+                el.style.opacity = '1';
+            }, { once: true });
+            io.observe(el);
+        });
+
+        /* ================================================================
+           三、导航滚动监听（Scrollspy）
+           ================================================================ */
+        const spy = new IntersectionObserver(entries => {
+            entries.forEach(en => {
+                if (en.isIntersecting) {
+                    $$('.nav-links a').forEach(a =>
+                        a.classList.toggle('active', a.getAttribute('href') === '#' + en.target.id));
+                }
+            });
+        }, { rootMargin: '-45% 0px -50% 0px' });
+        ['about', 'benefits', 'process', 'apply'].forEach(id => {
+            const s = document.getElementById(id);
+            if (s) spy.observe(s);
+        });
+
+        /* ================================================================
+           四、轮播图
+           ================================================================ */
+        const carousel = $('#carousel');
+        const cImgs = $$('.carousel img');
+        const dotsBox = $('#carDots');
+        let cIdx = 0, cTimer = null;
+
+        cImgs.forEach((_, i) => {
+            const d = document.createElement('button');
+            d.className = 'dot' + (i === 0 ? ' on' : '');
+            d.setAttribute('aria-label', '切换到第' + (i + 1) + '张');
+            d.addEventListener('click', () => { go(i); replay(); });
+            dotsBox.appendChild(d);
+        });
+        const dots = $$('.dot', dotsBox);
+
+        function go(n) {
+            cIdx = (n + cImgs.length) % cImgs.length;
+            cImgs.forEach((im, i) => im.classList.toggle('on', i === cIdx));
+            dots.forEach((d, i) => d.classList.toggle('on', i === cIdx));
+        }
+        function play()  { stop(); cTimer = setInterval(() => go(cIdx + 1), 2500); }
+        function stop()  { clearInterval(cTimer); }
+        function replay(){ stop(); play(); }
+
+        $('#carPrev').addEventListener('click', () => { go(cIdx - 1); replay(); });
+        $('#carNext').addEventListener('click', () => { go(cIdx + 1); replay(); });
+        carousel.addEventListener('mouseenter', stop);
+        carousel.addEventListener('mouseleave', play);
+
+        let touchX = 0;
+        carousel.addEventListener('touchstart', e => { touchX = e.touches[0].clientX; stop(); }, { passive: true });
+        carousel.addEventListener('touchend', e => {
+            const dx = e.changedTouches[0].clientX - touchX;
+            if (Math.abs(dx) > 40) go(cIdx + (dx < 0 ? 1 : -1));
+            play();
+        }, { passive: true });
+
+        play();
+
+        /* ================================================================
+           五、移动端菜单
+           ================================================================ */
+        const burger = $('#burger');
+        burger.addEventListener('click', () => {
+            const open = document.body.classList.toggle('menu-open');
+            burger.setAttribute('aria-expanded', open);
+            burger.setAttribute('aria-label', open ? '关闭菜单' : '打开菜单');
+        });
+        $$('#mPanel a').forEach(a => a.addEventListener('click', () => {
+            document.body.classList.remove('menu-open');
+            burger.setAttribute('aria-expanded', 'false');
+        }));
+        addEventListener('keydown', e => {
+            if (e.key === 'Escape') document.body.classList.remove('menu-open');
+        });
+
+        /* ================================================================
+           六、卡片 3D 微倾斜
+           ================================================================ */
+        if (matchMedia('(hover: hover) and (pointer: fine)').matches && !reduceMotion) {
+            $$('.tilt').forEach(card => {
+                card.addEventListener('mousemove', e => {
+                    const r = card.getBoundingClientRect();
+                    const rx = ((e.clientY - r.top) / r.height - 0.5) * -6;
+                    const ry = ((e.clientX - r.left) / r.width - 0.5) * 6;
+                    card.style.transform = `perspective(900px) rotateX(${rx.toFixed(2)}deg) rotateY(${ry.toFixed(2)}deg) translateY(-8px)`;
+                });
+                card.addEventListener('mouseleave', () => { card.style.transform = ''; });
+            });
+        }
+
+        /* ================================================================
+           七、二维码区漂浮粒子
+           ================================================================ */
+        const pf = $('#qrParticles');
+        const colors = ['#2e63f6', '#7b5cff', '#19c8f5', '#8ff0ff'];
+        for (let i = 0; i < 18; i++) {
+            const s = document.createElement('i');
+            const c = colors[i % colors.length];
+            const size = (3 + Math.random() * 5).toFixed(1);
+            s.style.cssText =
+                `left:${(4 + Math.random() * 92).toFixed(1)}%;` +
+                `top:${(4 + Math.random() * 92).toFixed(1)}%;` +
+                `width:${size}px;height:${size}px;` +
+                `--c:${c};--t:${(4.5 + Math.random() * 5).toFixed(1)}s;--dl:${(-Math.random() * 6).toFixed(1)}s;`;
+            pf.appendChild(s);
+        }
+    </script>
+
+    <!-- 星球彩蛋：滚动渐变显现 + 连点进入全屏小游戏 -->
+    <script>
+        (function() {
+            'use strict';
+
+            /* ============ 元素 ============ */
+            var egg = document.getElementById('planetEgg');
+            var qr = document.querySelector('.qr-stage');
+            var eggMode = document.getElementById('eggMode');
+            var canvas = document.getElementById('eggCanvas');
+            var ctx = canvas.getContext('2d');
+            var backBtn = document.getElementById('eggBack');
+            var startBtn = document.getElementById('eggStart');
+            var hud = document.getElementById('eggHud');
+            var scoreEl = document.getElementById('eggScore');
+            var distEl = document.getElementById('eggDist');
+            var hint = document.getElementById('eggHint');
+            if (!egg || !qr || !eggMode || !canvas || !ctx) return;
+
+            /* ============ 星球渐变显现（滚动驱动） ============ */
+            function updateEgg() {
+                var vh = window.innerHeight || document.documentElement.clientHeight;
+                var r = qr.getBoundingClientRect();
+                if (!r || !r.height) return;
+                var start = vh * 0.55;
+                var end = vh * 0.15;
+                var p = (start - r.top) / (start - end);
+                p = Math.max(0, Math.min(1, p));
+                egg.style.opacity = p.toFixed(3);
+                egg.style.visibility = p > 0.02 ? 'visible' : 'hidden';
+            }
+            window.addEventListener('scroll', updateEgg, { passive: true });
+            window.addEventListener('resize', updateEgg);
+            updateEgg();
+
+            /* ============ 连点触发彩蛋 ============ */
+            var clicks = 0, lastClick = 0;
+            egg.addEventListener('click', function(ev) {
+                ev.preventDefault();
+                var now = Date.now();
+                if (now - lastClick > 800) clicks = 0;
+                clicks += 1;
+                lastClick = now;
+                /* 防鬼畜：动画播放中（已含 pulse）不强制重启；播完由 animationend 自动移除类，
+                   快速连点 7 次过程中视觉平稳不抖动 */
+                if (!egg.classList.contains('pulse')) {
+                    egg.classList.add('pulse');
+                    egg.addEventListener('animationend', function onPulseEnd() {
+                        egg.classList.remove('pulse');
+                        egg.removeEventListener('animationend', onPulseEnd);
+                    });
+                }
+                if (clicks >= 7) {
+                    clicks = 0;
+                    enterMode();
+                }
+            });
+            egg.addEventListener('contextmenu', function(ev) { ev.preventDefault(); });
+
+            /* ============ 状态常量 ============ */
+            var ST_IDLE = 0, ST_PLAY = 1, ST_DEAD = 2;
+            var state = ST_IDLE;
+            var reduced = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+
+            var W = 0, H = 0, R = 0, cx = 0, cy = 0, arcTop = 0;
+            var t1 = 0, t2 = 0, spawnTheta = 0;
+            var MAN_H = 46, MAN_W = 16;
+            var man = null;
+            var obstacles = [];
+            var spots = [], stars = [];
+            var tex = 0, time = 0;
+            var spawnTimer = 0, speed = 0;
+            var score = 0, meters = 0;
+            var rafId = 0, lastT = 0, running = false;
+
+            /* ============ 画布尺寸 ============ */
+            function resize() {
+                W = canvas.width = eggMode.offsetWidth || window.innerWidth;
+                H = canvas.height = eggMode.offsetHeight || window.innerHeight;
+                /* 手机端缩小最小半径，让弧面更平缓、入场起点尽量进入可视区域 */
+                var minR = W < 700 ? Math.max(240, Math.round(W * 0.62)) : 520;
+                R = Math.max(Math.round(W * 0.9), minR);
+                var expose = Math.min(Math.round(H * 0.3), 300);
+                arcTop = H - expose;
+                cy = arcTop + R;
+                cx = Math.round(W / 2);
+                var d = cy - H;
+                var a = Math.asin(Math.max(0, Math.min(1, d / R)));
+                t1 = Math.PI + a;
+                t2 = 2 * Math.PI - a;
+                spawnTheta = t2 - 0.22;
+                spots = [];
+                for (var i = 0; i < 22; i++) {
+                    spots.push({
+                        a: t1 + 0.1 + Math.random() * (t2 - t1 - 0.2),
+                        rr: R * (0.9 + Math.random() * 0.09),
+                        s: 1.4 + Math.random() * 3,
+                        o: 0.05 + Math.random() * 0.15,
+                        dark: Math.random() < 0.4
+                    });
+                }
+                stars = [];
+                for (var j = 0; j < 70; j++) {
+                    stars.push({ x: Math.random() * W, y: Math.random() * H, r: 0.5 + Math.random() * 1.2, p: Math.random() * 6.28, sp: 0.4 + Math.random() * 1.4 });
+                }
+                if (man) { man.x = cx; man.y = arcTop; }
+            }
+            window.addEventListener('resize', resize);
+
+            /* ============ 重置 ============ */
+            function resetGame() {
+                state = ST_IDLE;
+                obstacles = [];
+                spawnTimer = 0;
+                speed = 0;
+                score = 0; meters = 0;
+                man = { x: cx, y: arcTop, enter: 0, enterTheta: 1.5 * Math.PI, jump: 0, duck: 0, dx: 0, runT: 0, fallRot: 0, deadT: 0, land: 0 };
+                tex = 0; time = 0;
+                scoreEl.textContent = '0';
+                distEl.textContent = '0';
+                hud.classList.add('hidden');
+                hint.textContent = '点击开始，探索星球';
+                hint.classList.remove('hidden');
+                startBtn.classList.remove('hidden');
+            }
+
+            /* ============ 输入 ============ */
+            function jump() {
+                if (state !== ST_PLAY || man.jump > 0 || man.duck > 0) return;
+                man.jump = 0.55;
+            }
+            function duck() {
+                if (state !== ST_PLAY || man.jump > 0 || man.duck > 0) return;
+                man.duck = 0.6;
+                man.dx = 0; /* 原地翻滚躲避，不再后撤 */
+            }
+            document.addEventListener('keydown', function(e) {
+                if (e.code === 'Space' || e.code === 'ArrowUp') { e.preventDefault(); jump(); }
+                else if (e.code === 'ArrowDown') { e.preventDefault(); duck(); }
+            });
+            var ty = 0, tx = 0;
+            eggMode.addEventListener('touchstart', function(e) {
+                var t = e.changedTouches[0];
+                ty = t.clientY; tx = t.clientX;
+            }, { passive: true });
+            eggMode.addEventListener('touchend', function(e) {
+                var t = e.changedTouches[0];
+                var dy = t.clientY - ty, dx2 = t.clientX - tx;
+                if (Math.abs(dy) > 28 && Math.abs(dy) > Math.abs(dx2)) {
+                    if (dy < 0) jump(); else duck();
+                }
+            }, { passive: true });
+            eggMode.addEventListener('touchmove', function(e) { if (e.cancelable) e.preventDefault(); }, { passive: false });
+            canvas.addEventListener('mousedown', function(e) { if (e.button === 0) jump(); });
+            canvas.addEventListener('contextmenu', function(e) { e.preventDefault(); duck(); });
+
+            backBtn.addEventListener('click', exitMode);
+            startBtn.addEventListener('click', startGame);
+
+            function startGame() {
+                if (state === ST_PLAY) return;
+                resetGame();
+                state = ST_PLAY;
+                man.enter = 1.1;
+                man.enterTheta = t1;
+                startBtn.classList.add('hidden');
+                hint.textContent = '左键 / 上滑 跳跃 · 右键 / 下滑 翻滚';
+                hud.classList.remove('hidden');
+            }
+
+            /* ============ 进入 / 退出（跃迁） ============ */
+            function enterMode() {
+                if (running) return;
+                resize();
+                resetGame();
+                eggMode.setAttribute('aria-hidden', 'false');
+                eggMode.classList.remove('closing');
+                eggMode.classList.add('open');
+                running = true;
+                document.body.style.overflow = 'hidden'; /* 锁页面滚动，防止小游戏模式下背景漂移 */
+                lastT = performance.now();
+                rafId = requestAnimationFrame(loop);
+            }
+            function exitMode() {
+                if (!running) return;
+                eggMode.classList.add('closing');
+                eggMode.classList.remove('open');
+                cancelAnimationFrame(rafId);
+                running = false;
+                document.body.style.overflow = '';
+                var self = eggMode;
+                setTimeout(function() {
+                    self.classList.remove('closing');
+                    self.setAttribute('aria-hidden', 'true');
+                }, 900);
+            }
+
+            /* ============ 更新 ============ */
+            function update(dt) {
+                time += dt;
+                if (state === ST_IDLE) {
+                    tex -= dt * (reduced ? 0.02 : 0.06);
+                    return;
+                }
+                if (state === ST_DEAD) {
+                    man.deadT += dt;
+                    /* 倒地：0.3s 内身体向后倒下，随后保持倒地姿态并闪烁 */
+                    man.fallRot = Math.min(1.35, man.deadT * 5);
+                    return;
+                }
+                /* PLAY：入场（从左下角弧面沿表面跑上弧顶） */
+                if (man.enter > 0) {
+                    man.enter -= dt;
+                    var prog = Math.max(0, 1 - man.enter / 1.1);
+                    var easeP = prog < 0.5 ? 2 * prog * prog : 1 - Math.pow(-2 * prog + 2, 2) / 2;
+                    man.enterTheta = t1 + (1.5 * Math.PI - t1) * easeP;
+                    man.x = cx + R * Math.cos(man.enterTheta);
+                    man.y = cy + R * Math.sin(man.enterTheta);
+                    man.runT += dt;
+                    if (man.enter <= 0) {
+                        man.x = cx;
+                        man.y = arcTop;
+                        speed = 200;
+                        spawnTimer = 0.65;
+                    }
+                    return;
+                }
+                /* PLAY：正式跑动 */
+                speed = Math.min(430, speed + dt * 6);
+                meters += dt * speed / 52;
+                distEl.textContent = Math.floor(meters);
+                tex -= dt * (speed / R);
+                man.x = cx + man.dx;
+                if (man.duck > 0) {
+                    man.duck -= dt;
+                    if (man.duck <= 0) man.duck = 0;
+                    man.dx = 0;
+                }
+                if (man.jump > 0) {
+                    man.jump -= dt;
+                    if (man.jump <= 0) { man.jump = 0; man.land = 0.14; }
+                }
+                /* 落地缓冲：着陆瞬间身体压缩，随后回弹 */
+                if (man.land > 0) {
+                    man.land -= dt;
+                    if (man.land < 0) man.land = 0;
+                }
+                man.runT += dt;
+
+                spawnTimer -= dt;
+                if (spawnTimer <= 0) {
+                    obstacles.push({ theta: spawnTheta, tall: Math.random() < 0.42, w: Math.random() < 0.42 ? 26 : 22 });
+                    spawnTimer = 0.9 + Math.random() * 1.3;
+                }
+                for (var i = obstacles.length - 1; i >= 0; i--) {
+                    var o = obstacles[i];
+                    o.theta -= dt * (speed / R);
+                    if (o.theta < t1) {
+                        obstacles.splice(i, 1);
+                        score += 1;
+                        scoreEl.textContent = score;
+                        continue;
+                    }
+                    var ox = cx + R * Math.cos(o.theta);
+                    var oy = cy + R * Math.sin(o.theta);
+                    var oh = o.tall ? 90 : 24;
+                    var manY = arcTop - jumpH();
+                    /* 判定放松：小人判定盒缩 38% 宽 / 18% 高，障碍判定内缩 26% 宽 / 20% 高，贴近却未碰到不算撞 */
+                    var mw = MAN_W * 0.62, mh = MAN_H * 0.82;
+                    /* 翻滚蜷缩时判定盒明显变矮，便于滚过低障碍 */
+                    if (man.duck > 0) mh = MAN_H * 0.5;
+                    var ow2 = o.w * 0.74;
+                    /* 高障碍判定改为顶部横梁：障碍视觉 90px，判定区仅覆盖顶部（高48、底上移30），跳跃最高46px越不过，翻滚贴地(判定高23px)可从下方空隙通过 */
+                    var oh2 = o.tall ? 48 : oh * 0.8;
+                    var ob = o.tall ? oy - 30 : oy;
+                    if (ox - ow2 / 2 < man.x + mw / 2 &&
+                        ox + ow2 / 2 > man.x - mw / 2 &&
+                        ob - oh2 < manY + 3 &&
+                        ob > manY - mh) {
+                        die();
+                        break;
+                    }
+                }
+            }
+
+            function jumpH() {
+                if (!man.jump) return 0;
+                var p = 1 - man.jump / 0.55;
+                return Math.sin(p * Math.PI) * 46;
+            }
+
+            function die() {
+                state = ST_DEAD;
+                man.deadT = 0;
+                obstacles = [];
+                setTimeout(function() {
+                    if (state === ST_DEAD) {
+                        startBtn.classList.remove('hidden');
+                        hint.textContent = '点击开始，再来一局';
+                        hint.classList.remove('hidden');
+                    }
+                }, 750);
+            }
+
+            /* ============ 绘制 ============ */
+            function draw() {
+                var bg = ctx.createLinearGradient(0, 0, 0, H);
+                bg.addColorStop(0, '#04070f');
+                bg.addColorStop(0.75, '#080d1e');
+                bg.addColorStop(1, '#0c1228');
+                ctx.fillStyle = bg;
+                ctx.fillRect(0, 0, W, H);
+                drawStars();
+                drawArc();
+                if (state !== ST_IDLE) {
+                    drawObstacles();
+                    drawMan();
+                }
+            }
+
+            function drawStars() {
+                for (var i = 0; i < stars.length; i++) {
+                    var s = stars[i];
+                    var a = 0.1 + 0.2 * (0.5 + 0.5 * Math.sin(time * s.sp + s.p));
+                    ctx.fillStyle = 'rgba(205,218,255,' + a.toFixed(2) + ')';
+                    ctx.beginPath();
+                    ctx.arc(s.x, s.y, s.r, 0, 6.283);
+                    ctx.fill();
+                }
+            }
+
+            function drawArc() {
+                var g = ctx.createLinearGradient(0, arcTop, 0, H);
+                g.addColorStop(0, '#24345f');
+                g.addColorStop(0.4, '#131f42');
+                g.addColorStop(1, '#070b20');
+                ctx.beginPath();
+                ctx.arc(cx, cy, R, t1, t2);
+                ctx.lineTo(cx + R, H + 20);
+                ctx.lineTo(cx - R, H + 20);
+                ctx.closePath();
+                ctx.fillStyle = g;
+                ctx.fill();
+                /* 斑驳纹理（随转动移动） */
+                for (var i = 0; i < spots.length; i++) {
+                    var s = spots[i];
+                    var a = s.a + tex;
+                    if (a < t1 || a > t2) continue;
+                    var px = cx + s.rr * Math.cos(a);
+                    var py = cy + s.rr * Math.sin(a);
+                    if (py < arcTop - 8 || py > H) continue;
+                    ctx.fillStyle = s.dark ? 'rgba(6,10,24,' + (s.o + 0.1).toFixed(2) + ')' : 'rgba(200,215,255,' + s.o.toFixed(2) + ')';
+                    ctx.beginPath();
+                    ctx.arc(px, py, s.s, 0, 6.283);
+                    ctx.fill();
+                }
+                /* 顶缘高光 */
+                ctx.strokeStyle = 'rgba(150,178,255,.3)';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.arc(cx, cy, R, t1, t2);
+                ctx.stroke();
+                ctx.strokeStyle = 'rgba(255,255,255,.05)';
+                ctx.lineWidth = 10;
+                ctx.beginPath();
+                ctx.arc(cx, cy, R - 8, t1, t2);
+                ctx.stroke();
+            }
+
+            function drawObstacles() {
+                for (var i = 0; i < obstacles.length; i++) {
+                    var o = obstacles[i];
+                    var ox = cx + R * Math.cos(o.theta);
+                    var oy = cy + R * Math.sin(o.theta);
+                    var oh = o.tall ? 90 : 24;
+                    var ow = o.w;
+                    var g = ctx.createLinearGradient(ox - ow / 2, 0, ox + ow / 2, 0);
+                    g.addColorStop(0, o.tall ? '#38466f' : '#31406a');
+                    g.addColorStop(1, o.tall ? '#1d2848' : '#1a2442');
+                    ctx.fillStyle = g;
+                    ctx.beginPath();
+                    if (ctx.roundRect) ctx.roundRect(ox - ow / 2, oy - oh, ow, oh, 5);
+                    else ctx.rect(ox - ow / 2, oy - oh, ow, oh);
+                    ctx.fill();
+                    ctx.strokeStyle = 'rgba(10,16,34,.85)';
+                    ctx.lineWidth = 1.5;
+                    ctx.stroke();
+                    ctx.fillStyle = 'rgba(210,224,255,.22)';
+                    ctx.fillRect(ox - ow / 2 + 3, oy - oh + 3, ow - 6, 3);
+                }
+            }
+
+            /* 两段式肢体：a1 为第一段方向角，a2 为第二段相对弯曲角（a=0 指向 +y 下方，正角偏向 +x 前方） */
+            function limb(x0, y0, a1, l1, a2, l2) {
+                var kx = x0 + Math.sin(a1) * l1;
+                var ky = y0 + Math.cos(a1) * l1;
+                ctx.beginPath();
+                ctx.moveTo(x0, y0);
+                ctx.lineTo(kx, ky);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(kx, ky);
+                ctx.lineTo(kx + Math.sin(a1 + a2) * l2, ky + Math.cos(a1 + a2) * l2);
+                ctx.stroke();
+            }
+
+            /* 团身贴地滚动：球心贴地，头/躯干/腿/臂按 FK 逐帧重算关节坐标（禁用整体 rotate，避免绕点空转） */
+            function drawRoll(x, y) {
+                var p = 1 - man.duck / 0.6;
+                var a = p * Math.PI * 2;
+                var BR = 13;
+                var bx = x, by = y - BR;
+                ctx.strokeStyle = '#eaf0ff';
+                ctx.lineWidth = 3;
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+                /* 头：沿球面随滚动角移动（低头→滚底→滚后→回正），保持贴球 */
+                var hx = bx + Math.cos(a - Math.PI / 2) * BR * 0.92;
+                var hy = by + Math.sin(a - Math.PI / 2) * BR * 0.92;
+                ctx.beginPath();
+                ctx.arc(hx, hy, 4.2, 0, 6.283);
+                ctx.stroke();
+                /* 躯干：球心到头方向弓背 */
+                var tx = bx + Math.cos(a - Math.PI / 2) * BR * 0.55;
+                var ty = by + Math.sin(a - Math.PI / 2) * BR * 0.55;
+                ctx.beginPath();
+                ctx.moveTo(tx, ty);
+                ctx.lineTo(bx, by - 4);
+                ctx.stroke();
+                /* 腿：膝折向球心、脚贴球面，随滚动交替蹬收 */
+                var hip1x = bx + Math.cos(a) * 3, hip1y = by + Math.sin(a) * 3 - 4;
+                var foot1x = bx + Math.cos(a + 0.5) * BR * 0.96, foot1y = by + Math.sin(a + 0.5) * BR * 0.96;
+                var knee1x = (hip1x + foot1x) / 2 + (bx - hip1x) * 0.35, knee1y = (hip1y + foot1y) / 2 + (by - hip1y) * 0.35;
+                ctx.beginPath();
+                ctx.moveTo(hip1x, hip1y);
+                ctx.lineTo(knee1x, knee1y);
+                ctx.lineTo(foot1x, foot1y);
+                ctx.stroke();
+                var hip2x = bx + Math.cos(a + Math.PI) * 3, hip2y = by + Math.sin(a + Math.PI) * 3 - 4;
+                var foot2x = bx + Math.cos(a - 0.5) * BR * 0.96, foot2y = by + Math.sin(a - 0.5) * BR * 0.96;
+                var knee2x = (hip2x + foot2x) / 2 + (bx - hip2x) * 0.35, knee2y = (hip2y + foot2y) / 2 + (by - hip2y) * 0.35;
+                ctx.beginPath();
+                ctx.moveTo(hip2x, hip2y);
+                ctx.lineTo(knee2x, knee2y);
+                ctx.lineTo(foot2x, foot2y);
+                ctx.stroke();
+                /* 臂：抱球面两侧 */
+                var shx = bx, shy = by - 9;
+                var hand1x = bx + Math.cos(a + 1.2) * BR * 0.9, hand1y = by + Math.sin(a + 1.2) * BR * 0.9;
+                var elb1x = (shx + hand1x) / 2 + (bx - shx) * 0.5, elb1y = (shy + hand1y) / 2 + (by - shy) * 0.5;
+                ctx.beginPath();
+                ctx.moveTo(shx, shy);
+                ctx.lineTo(elb1x, elb1y);
+                ctx.lineTo(hand1x, hand1y);
+                ctx.stroke();
+                var hand2x = bx + Math.cos(a - 1.2) * BR * 0.9, hand2y = by + Math.sin(a - 1.2) * BR * 0.9;
+                var elb2x = (shx + hand2x) / 2 + (bx - shx) * 0.5, elb2y = (shy + hand2y) / 2 + (by - shy) * 0.5;
+                ctx.beginPath();
+                ctx.moveTo(shx, shy);
+                ctx.lineTo(elb2x, elb2y);
+                ctx.lineTo(hand2x, hand2y);
+                ctx.stroke();
+            }
+
+            function drawMan() {
+                var x = man.x;
+                var y = man.y - jumpH();
+                var flash = 1;
+                if (state === ST_DEAD) flash = 0.45 + 0.25 * Math.sin(man.deadT * 20);
+                ctx.save();
+                ctx.globalAlpha = Math.max(0.08, flash);
+                /* 团身贴地滚动：FK 逐帧重算关节坐标、球心贴地滚一圈，不再整体 rotate 绕点空转 */
+                if (man.duck > 0) {
+                    drawRoll(x, y);
+                    ctx.restore();
+                    return;
+                }
+                /* 死亡：绕脚底向后倒地（翻滚已由 drawRoll 独立处理） */
+                var pivot = 0, rollRot = 0;
+                if (state === ST_DEAD) {
+                    pivot = 0;
+                    rollRot = man.fallRot;
+                }
+                ctx.translate(x, y + pivot);
+                /* 入场沿弧面：身体法向随弧面角度倾斜，贴合"沿表面跑上" */
+                if (man.enter > 0) ctx.rotate(man.enterTheta - 1.5 * Math.PI);
+                if (rollRot !== 0) ctx.rotate(rollRot);
+                /* 跑动轻微前倾（翻滚/倒地时不前倾） */
+                if (state === ST_PLAY && man.enter <= 0 && man.duck <= 0) ctx.rotate(0.08);
+                /* 压缩 / 拉伸：落地缓冲压缩、空中微拉伸（翻滚已由 drawRoll 独立处理） */
+                var sq = 1;
+                if (man.land > 0) {
+                    sq = 1 - 0.22 * (man.land / 0.14);
+                } else if (man.jump > 0) {
+                    sq = 1 + 0.10 * Math.sin((1 - man.jump / 0.55) * Math.PI);
+                }
+                ctx.scale(1, sq);
+                ctx.strokeStyle = '#eaf0ff';
+                ctx.lineWidth = 3;
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+                /* 跑步重心起伏：仅地面跑动时，随步频小幅度上下 */
+                if (state === ST_PLAY && man.enter <= 0 && !man.jump && !man.duck) {
+                    ctx.translate(0, Math.abs(Math.sin(man.runT * 13)) * 2.4);
+                }
+
+                /* 姿态参数：腿/臂均为两段式（大腿8+小腿10，上臂6.5+前臂6.5） */
+                var ph = man.runT * 13;
+                var headOff = 5;
+                var leg1a = 0, leg1b = 0, leg2a = 0, leg2b = 0;
+                var arm1a = 0, arm1b = 0, arm2a = 0, arm2b = 0;
+                if (state === ST_DEAD) {
+                    /* 倒地：腿自然伸直微弯，手臂摊开 */
+                    leg1a = 0.14; leg1b = 0.08;
+                    leg2a = -0.14; leg2b = 0.08;
+                    arm1a = 0.45; arm1b = -0.15;
+                    arm2a = -0.45; arm2b = -0.15;
+                } else if (man.jump > 0) {
+                    /* 提膝跳：摆动腿高抬提膝、小腿自然收折，支撑腿微屈蹬伸，手臂随摆平衡，避免对称飞扑 */
+                    leg1a = 1.15; leg1b = -1.05;
+                    leg2a = 0.15; leg2b = -0.35;
+                    arm1a = -0.45; arm1b = 0.55;
+                    arm2a = 0.6; arm2b = 0.35;
+                } else {
+                    /* 跑步：两段式屈膝（前摆屈膝、后蹬伸直）+ 手臂弯肘与腿反相摆动 */
+                    leg1a = Math.sin(ph) * 0.8; leg1b = -0.5 - 0.5 * Math.sin(ph);
+                    leg2a = Math.sin(ph + Math.PI) * 0.8; leg2b = -0.5 - 0.5 * Math.sin(ph + Math.PI);
+                    arm1a = Math.sin(ph + Math.PI) * 0.55; arm1b = 1.0;
+                    arm2a = Math.sin(ph) * 0.55; arm2b = 1.0;
+                }
+
+                /* 头 */
+                ctx.beginPath();
+                ctx.arc(0, -MAN_H + headOff, 4.5, 0, 6.283);
+                ctx.stroke();
+                /* 躯干 */
+                ctx.beginPath();
+                ctx.moveTo(0, -MAN_H + 9);
+                ctx.lineTo(0, -MAN_H * 0.45);
+                ctx.stroke();
+                /* 腿 */
+                limb(0, -MAN_H * 0.45, leg1a, 8, leg1b, 10);
+                limb(0, -MAN_H * 0.45, leg2a, 8, leg2b, 10);
+                /* 手臂 */
+                limb(0, -MAN_H * 0.78, arm1a, 6.5, arm1b, 6.5);
+                limb(0, -MAN_H * 0.78, arm2a, 6.5, arm2b, 6.5);
+                ctx.restore();
+            }
+
+            /* ============ 主循环 ============ */
+            function loop(t) {
+                if (!running) return;
+                var dt = Math.min(0.05, (t - lastT) / 1000);
+                lastT = t;
+                update(dt);
+                draw();
+                rafId = requestAnimationFrame(loop);
+            }
+        })();
+    </script>
+
+    <!-- ================================================================
+         AI 对话功能（独立块：回滚时删除本 script 块即可）
+         依赖小助手 IIFE 暴露的 window.__assistantCore
+         ================================================================ -->
+    <script>
+        (function() {
+            'use strict';
+
+            /* ============ DOM 构建 ============ */
+            const core = window.__assistantCore || null;
+            const assistantEl = core ? core.assistant : document.getElementById('assistant');
+
+            const box = document.createElement('div');
+            box.id = 'aiChat';
+            box.className = 'ai-chat';
+            box.setAttribute('role', 'dialog');
+            box.setAttribute('aria-modal', 'true');
+            box.setAttribute('aria-hidden', 'true');
+            box.innerHTML = [
+                '<svg class="ai-outline" viewBox="0 0 1 1" preserveAspectRatio="none" aria-hidden="true">',
+                '  <defs><linearGradient id="aiGrad" x1="0" y1="0" x2="1" y2="1">',
+                '    <stop offset="0" stop-color="#2e63f6"/><stop offset=".55" stop-color="#7b5cff"/><stop offset="1" stop-color="#19c8f5"/>',
+                '  </linearGradient></defs>',
+                '  <path class="ai-line ai-line-l" d=""/><path class="ai-line ai-line-r" d=""/>',
+                '</svg>',
+                '<div class="ai-body">',
+                '  <button type="button" class="ai-close" aria-label="关闭AI对话">✕</button>',
+                '  <div class="ai-head">',
+                '    <div class="ai-avatar" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="9" r="3.2"/><path d="M5.5 19c.9-3 3.4-4.6 6.5-4.6s5.6 1.6 6.5 4.6"/></svg></div>',
+                '    <div class="ai-greet">你好呀,我是HSD的社员小w,我能为你做些什么呢?</div>',
+                '  </div>',
+                '  <div class="ai-log" role="log" aria-live="polite"></div>',
+                '  <form class="ai-input" novalidate>',
+                '    <input class="ai-text" type="text" placeholder="输入你想问的问题..." autocomplete="off" maxlength="200" aria-label="输入内容"/>',
+                '    <button type="submit" class="ai-send">发送</button>',
+                '  </form>',
+                '</div>'
+            ].join('\n');
+            (assistantEl && assistantEl.parentNode ? assistantEl.parentNode : document.body).appendChild(box);
+
+            const lineL = box.querySelector('.ai-line-l');
+            const lineR = box.querySelector('.ai-line-r');
+            const svgEl = box.querySelector('.ai-outline');
+            const closeBtn = box.querySelector('.ai-close');
+            const logEl = box.querySelector('.ai-log');
+            const formEl = box.querySelector('.ai-input');
+            const textEl = box.querySelector('.ai-text');
+            const sendBtn = box.querySelector('.ai-send');
+
+            const OUTLINE_R = 18;   // 圆角半径
+            const MOVE_MS = 500;    // 小助手平移动画时长
+            const DRAW_MS = 1600;   // 线框勾勒时长（方块瀑布同步在 1.6s 内落定，放慢展示构造过程）
+            const CLOSE_MS = 150;   // 窗口淡出时长
+            const isTouch = window.matchMedia && window.matchMedia('(hover: none), (pointer: coarse)').matches;
+
+            let origin = null;      // 打开前小助手停靠位置
+            let open = false;
+
+            /* ============ 工具 ============ */
+            function lockBody(lock) {
+                document.body.classList.toggle('ai-mode', lock);
+            }
+            function setAssistantLock(lock) {
+                if (core) core.setLock(lock);
+            }
+
+            /* 平移目标：窗口顶部水平中心，窗口顶边恰好压在小助手按钮约 75% 高度处
+               （按钮上部 75% 露出、下部 25% 被窗口覆盖，呈现"半掩"效果） */
+            function computeTarget() {
+                const r = box.getBoundingClientRect();
+                const ast = assistantEl.getBoundingClientRect();
+                const cx = r.left + r.width / 2;
+                const top = r.top - ast.height * 0.75;
+                return { left: cx - ast.width / 2, top: top };
+            }
+
+            /* transform 平移小助手（GPU 合成，不动画 layout 属性） */
+            function moveAssistantTo(left, top, dur, cb) {
+                const r = assistantEl.getBoundingClientRect();
+                const dx = left - r.left;
+                const dy = top - r.top;
+                if (Math.abs(dx) < 0.5 && Math.abs(dy) < 0.5) {
+                    assistantEl.style.left = left + 'px';
+                    assistantEl.style.top = top + 'px';
+                    if (cb) cb();
+                    return;
+                }
+                const st = assistantEl.style;
+                st.transition = 'none';
+                st.left = left + 'px';
+                st.top = top + 'px';
+                st.transform = 'translate(' + dx + 'px,' + dy + 'px)';
+                void assistantEl.offsetWidth; // 回流，锁定起始视觉位置
+                st.transition = 'transform ' + dur + 'ms cubic-bezier(.4,0,.2,1)';
+                st.transform = '';
+                let done = false;
+                const finish = function() {
+                    if (done) return;
+                    done = true;
+                    st.transition = '';
+                    st.transform = '';
+                    if (cb) cb();
+                };
+                assistantEl.addEventListener('transitionend', finish, { once: true });
+                setTimeout(finish, dur + 90);
+            }
+
+            /* ============ 线框勾勒 ============ */
+            function layoutOutline() {
+                const r = box.getBoundingClientRect();
+                const w = r.width;
+                const h = r.height;
+                const pad = 4;                 // SVG 相对窗口外扩 4px
+                const W = w + pad * 2;
+                const H = h + pad * 2;
+                const cx = W / 2;              // 出线点 x（窗口顶边水平中心）
+                const y0 = pad;                // 窗口顶边 y
+                const yb = pad + h;            // 窗口底边 y
+                const rad = OUTLINE_R;
+                const lx = pad;
+                const rx = pad + w;
+
+                const dL = 'M ' + cx.toFixed(1) + ' ' + y0.toFixed(1)
+                    + ' L ' + (lx + rad).toFixed(1) + ' ' + y0.toFixed(1)
+                    + ' A ' + rad + ' ' + rad + ' 0 0 0 ' + lx.toFixed(1) + ' ' + (y0 + rad).toFixed(1)
+                    + ' L ' + lx.toFixed(1) + ' ' + (yb - rad).toFixed(1)
+                    + ' A ' + rad + ' ' + rad + ' 0 0 0 ' + (lx + rad).toFixed(1) + ' ' + yb.toFixed(1)
+                    + ' L ' + cx.toFixed(1) + ' ' + yb.toFixed(1);
+                const dR = 'M ' + cx.toFixed(1) + ' ' + y0.toFixed(1)
+                    + ' L ' + (rx - rad).toFixed(1) + ' ' + y0.toFixed(1)
+                    + ' A ' + rad + ' ' + rad + ' 0 0 1 ' + rx.toFixed(1) + ' ' + (y0 + rad).toFixed(1)
+                    + ' L ' + rx.toFixed(1) + ' ' + (yb - rad).toFixed(1)
+                    + ' A ' + rad + ' ' + rad + ' 0 0 1 ' + (rx - rad).toFixed(1) + ' ' + yb.toFixed(1)
+                    + ' L ' + cx.toFixed(1) + ' ' + yb.toFixed(1);
+
+                lineL.setAttribute('d', dL);
+                lineR.setAttribute('d', dR);
+                svgEl.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+
+                [lineL, lineR].forEach(function(p) {
+                    const len = p.getTotalLength();
+                    p.style.strokeDasharray = len.toFixed(1);
+                    p.style.strokeDashoffset = len.toFixed(1);
+                });
+            }
+
+            function startDraw() {
+                lineL.classList.add('drawing');
+                lineR.classList.add('drawing');
+                return new Promise(function(resolve) {
+                    let ended = 0;
+                    const onEnd = function() {
+                        ended++;
+                        if (ended >= 2) {
+                            lineL.removeEventListener('animationend', onEnd);
+                            lineR.removeEventListener('animationend', onEnd);
+                            resolve();
+                        }
+                    };
+                    lineL.addEventListener('animationend', onEnd);
+                    lineR.addEventListener('animationend', onEnd);
+                    setTimeout(resolve, DRAW_MS + 120); // 兜底
+                });
+            }
+
+            /* ============ 打开流程 ============ */
+            function openAIChat() {
+                if (open) return;
+                open = true;
+                box.setAttribute('aria-hidden', 'false');
+
+                /* a. 收起选项环 + 锁滚动 + 锁小助手交互 */
+                if (core) core.closeOptions();
+                lockBody(true);
+                setAssistantLock(true);
+
+                /* 记录当前停靠位置（关闭时移回） */
+                const r0 = assistantEl.getBoundingClientRect();
+                origin = { left: r0.left, top: r0.top };
+
+                /* 窗口预布局（不可见）：线框路径 + 内容重置 */
+                box.classList.remove('ready');
+                box.classList.remove('open');
+                /* 线框动画重置（二次打开时需移除 drawing 并回流，否则动画不会重启） */
+                [lineL, lineR].forEach(function(p) { p.classList.remove('drawing'); });
+                void lineL.offsetWidth;
+                logEl.innerHTML = '';
+                textEl.value = '';
+                sendBtn.disabled = true;
+                layoutOutline();
+
+                /* b. 小助手平移到屏幕中间偏上（出线点就位） */
+                const target = computeTarget();
+                moveAssistantTo(target.left, target.top, MOVE_MS, function() {
+                    /* c+d. 窗口淡入：线框勾勒开始 */
+                    box.classList.add('open');
+                    startDraw().then(function() {
+                        if (!open) return; // 已在勾勒完成前关闭，忽略残留回调
+                        /* e. 勾勒完成：问候气泡滑入 + 输入框就绪 */
+                        box.classList.add('ready');
+                        if (!isTouch) textEl.focus();
+                    });
+                });
+            }
+
+            /* ============ 发送 ============ */
+            /* AI 对话接口地址：同域部署时保持 '/api/chat' 即可；
+               若前端与后端分离部署（如静态托管 + 独立服务器），改为后端完整地址，如 'https://你的域名/api/chat' */
+            const AI_API_ENDPOINT = (window.__AI_API_ENDPOINT) ? window.__AI_API_ENDPOINT : '/api/chat';
+            function sendMessage() {
+                const v = textEl.value.trim();
+                if (!v) return;
+                const msg = document.createElement('div');
+                msg.className = 'ai-msg';
+                msg.textContent = v;
+                logEl.appendChild(msg);
+                textEl.value = '';
+                sendBtn.disabled = true;
+                logEl.scrollTop = logEl.scrollHeight;
+
+                /* AI 正在思考占位 */
+                const bot = document.createElement('div');
+                bot.className = 'ai-msg bot typing';
+                bot.textContent = '正在思考';
+                logEl.appendChild(bot);
+                logEl.scrollTop = logEl.scrollHeight;
+
+                fetch(AI_API_ENDPOINT, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: v })
+                }).then(function(res) {
+                    return res.json().then(function(data) {
+                        if (!res.ok) throw new Error((data && data.error) ? data.error : ('请求失败(' + res.status + ')'));
+                        return data;
+                    });
+                }).then(function(data) {
+                    bot.classList.remove('typing');
+                    bot.textContent = (data && data.reply) ? data.reply : '（未收到回复）';
+                }).catch(function(err) {
+                    bot.classList.remove('typing');
+                    bot.classList.add('error');
+                    bot.textContent = 'AI 服务暂不可用：' + (err && err.message ? err.message : '网络错误');
+                }).finally(function() {
+                    logEl.scrollTop = logEl.scrollHeight;
+                    sendBtn.disabled = !textEl.value.trim();
+                });
+            }
+            textEl.addEventListener('input', function() {
+                sendBtn.disabled = !textEl.value.trim();
+            });
+            formEl.addEventListener('submit', function(e) {
+                e.preventDefault();
+                sendMessage();
+            });
+
+            /* ============ 关闭流程 ============ */
+            function finishClose() {
+                setAssistantLock(false);
+                lockBody(false);
+                origin = null;
+            }
+            function closeAIChat() {
+                if (!open) return;
+                open = false;
+                box.setAttribute('aria-hidden', 'true');
+                box.classList.remove('ready');
+                /* 窗口 0.15s 淡出 */
+                box.classList.remove('open');
+                setTimeout(function() {
+                    if (origin) {
+                        // 移回停靠半掩位（而非打开时的完整展开位），保证关闭后小助手贴边半掩
+                        const dockLeftNow = core && core.getDockLeft ? core.getDockLeft() : origin.left;
+                        moveAssistantTo(dockLeftNow, origin.top, 400, finishClose); // 0.4s 移回停靠位
+                    } else {
+                        finishClose();
+                    }
+                }, CLOSE_MS + 20);
+            }
+            closeBtn.addEventListener('click', closeAIChat);
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && open) closeAIChat();
+            });
+
+            /* resize：窗口尺寸由 CSS vw/vh 自适应，此处仅重算线框路径并让球体跟随窗口顶部 */
+            window.addEventListener('resize', function() {
+                if (!open) return;
+                layoutOutline();
+                const target = computeTarget();
+                assistantEl.style.transition = 'none';
+                assistantEl.style.transform = '';
+                assistantEl.style.left = target.left + 'px';
+                assistantEl.style.top = target.top + 'px';
+            });
+
+            /* 入口：小助手选项环 action='ai' 时调用 */
+            window.__openAIChat = openAIChat;
+        })();
+    </script>
+
+    <!-- ================================================================
+         弹簧挂件系统（独立块：回滚时删除本 script 块即可）
+         重构 v2：挂载于顶部导航栏下方横向一排，按 .nav-links 四个链接中心对齐；
+                 自然长度 左→右 50/80/110/140，激活区块弹簧伸展下沉、其余收缩贴顶；
+                 物理阻尼出场 / 滚动联动联动拉伸 / 拖拽弹回对应区块
+         ================================================================ -->
+    <script>
+        (function() {
+            'use strict';
+
+            /* 触屏与精确指针统一支持（pointer events）；无 rAF 时静默跳过 */
+            if (!window.requestAnimationFrame) return;
+            var reduceMotion = window.matchMedia &&
+                window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+            var NAV = document.querySelector('.nav');
+            var LINKS = Array.prototype.slice.call(document.querySelectorAll('.nav .nav-links a'));
+            if (!NAV || LINKS.length !== 4) return;
+
+            /* 图标 SVG（24 viewBox，四个区块各一，fill 用各自内嵌渐变） */
+            var ICONS = [
+                '<svg viewBox="0 0 24 24"><defs><linearGradient id="sg-about" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5b8cff"/><stop offset="1" stop-color="#8f6bff"/></linearGradient></defs><path fill="url(#sg-about)" d="M12 2.2l2.7 6.1 6.6.6-5 4.4 1.5 6.5-5.8-3.4-5.8 3.4 1.5-6.5-5-4.4 6.6-.6z"/></svg>',
+                '<svg viewBox="0 0 24 24"><defs><linearGradient id="sg-welfare" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4ac6ff"/><stop offset="1" stop-color="#6b7bff"/></linearGradient></defs><path fill="url(#sg-welfare)" d="M4 16.5h16l1.8-9.4-5 3.8L12 3.6 7.2 10.9l-5-3.8z"/><path fill="url(#sg-welfare)" d="M4 18.6h16v1.8H4z"/></svg>',
+                '<svg viewBox="0 0 24 24"><defs><linearGradient id="sg-process" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8f6bff"/><stop offset="1" stop-color="#c05bff"/></linearGradient></defs><circle cx="12" cy="12" r="5" fill="url(#sg-process)"/><path fill="none" stroke="url(#sg-process)" stroke-width="2.1" stroke-linecap="round" d="M12 1.8v3M12 19.2v3M1.8 12h3M19.2 12h3M4.6 4.6l2.1 2.1M17.3 17.3l2.1 2.1M19.4 4.6l-2.1 2.1M6.7 17.3l-2.1 2.1"/></svg>',
+                '<svg viewBox="0 0 24 24"><defs><linearGradient id="sg-signup" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3dd9c8"/><stop offset="1" stop-color="#4a9bff"/></linearGradient></defs><path fill="url(#sg-signup)" d="M12 2c3.3 2 4.8 6.2 4.8 9.6L12 15.8l-4.8-4.2C7.2 8.2 8.7 4 12 2z"/><circle cx="12" cy="8.6" r="1.7" fill="#fff"/><path fill="url(#sg-signup)" d="M7.2 13.4l-2.1 3.7 3.3 1.2M16.8 13.4l2.1 3.7-3.3 1.2M9.7 17.4L12 21.4l2.3-4z"/></svg>'
+            ];
+
+            /* 自然长度：左→右 50 → 80 → 110 → 140（与四链接顺序一致） */
+            var LENS = [50, 80, 110, 140];
+
+            /* 生成锯齿线圈路径（振幅 ±9，峰距 10px，viewBox 高 = 自然长度） */
+            function coilPath(L0) {
+                var pts = ['M20 2'];
+                var y = 2, dir = 1;
+                while (y < L0 - 10) {
+                    y += 10;
+                    pts.push('L' + (dir > 0 ? 11 : 29) + ' ' + y.toFixed(1));
+                    dir = -dir;
+                }
+                pts.push('L20 ' + (L0 - 2).toFixed(1));
+                return pts.join(' ');
+            }
+
+            /* 横排容器：absolute 挂在导航栏下边缘下方（随 nav fixed） */
+            var row = document.createElement('div');
+            row.className = 'spring-row';
+            row.setAttribute('aria-hidden', 'true');
+            NAV.appendChild(row);
+
+            var springs = [];
+
+            LINKS.forEach(function(link, i) {
+                var L0 = LENS[i];
+
+                var orn = document.createElement('div');
+                orn.className = 'spring-orn';
+
+                /* 弹簧 SVG：描边颜色由 CSS 按导航 scrolled 两态控制 */
+                var coil = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                coil.setAttribute('class', 'coil');
+                coil.setAttribute('viewBox', '0 0 40 ' + L0);
+                coil.setAttribute('preserveAspectRatio', 'none');
+                coil.style.height = L0 + 'px';
+                coil.style.top = '0px';
+                var path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                path.setAttribute('d', coilPath(L0));
+                path.setAttribute('fill', 'none');
+                path.setAttribute('stroke-width', '3.4');
+                path.setAttribute('stroke-linecap', 'round');
+                coil.appendChild(path);
+
+                /* 底部挂饰图标（可拖拽） */
+                var weight = document.createElement('div');
+                weight.className = 'weight';
+                weight.innerHTML = ICONS[i];
+                weight.style.top = L0 + 'px';
+
+                orn.appendChild(coil);
+                orn.appendChild(weight);
+                row.appendChild(orn);
+
+                var spring = {
+                    index: i,
+                    link: link,
+                    coil: coil,
+                    weight: weight,
+                    orn: orn,
+                    L0: L0,
+                    x: -L0 * 0.8,       // 初始收缩贴顶
+                    v: 300,             // 首屏阻尼出场冲量
+                    xTarget: -L0 * 0.55,
+                    minX: -L0 * 0.45,   // 收缩下限
+                    maxX: L0 * 1.1 + 40,// 拖拽拉伸上限
+                    dragging: false,
+                    pointerId: null,
+                    dragStartY: 0,
+                    dragBase: 0,
+                    dragX: 0
+                };
+                weight._spring = spring;
+                springs.push(spring);
+
+                spring.apply = function() {
+                    var L = spring.L0 + spring.x;
+                    coil.style.transform = 'translateX(-50%) scaleY(' + (L / spring.L0).toFixed(4) + ')';
+                    weight.style.transform = 'translate(-50%,' + spring.x.toFixed(1) + 'px)';
+                };
+                spring.apply();
+
+                /* 拖拽：按住挂饰下拉拉伸（限位）；松手超 60px 平滑滚回区块，轻拉物理回弹 */
+                weight.addEventListener('pointerdown', function(e) {
+                    if (spring.dragging) return;
+                    spring.dragging = true;
+                    spring.pointerId = e.pointerId;
+                    spring.dragStartY = e.clientY;
+                    spring.dragBase = spring.x;
+                    spring.dragX = spring.x;
+                    spring.v = 0;
+                    if (weight.setPointerCapture) weight.setPointerCapture(e.pointerId);
+                    e.preventDefault();
+                });
+                weight.addEventListener('pointermove', function(e) {
+                    if (!spring.dragging || e.pointerId !== spring.pointerId) return;
+                    var dy = (e.clientY - spring.dragStartY) * 1.5; // 1.5 倍手感放大
+                    spring.dragX = Math.max(spring.minX, Math.min(spring.maxX, spring.dragBase + dy));
+                    spring.x = spring.dragX;
+                    spring.v = 0;
+                    spring.apply();
+                });
+                function endSpringDrag(e) {
+                    if (!spring.dragging || e.pointerId !== spring.pointerId) return;
+                    spring.dragging = false;
+                    var dy = (e.clientY - spring.dragStartY) * 1.5;
+                    if (dy > 60) {
+                        var t = document.querySelector(spring.link.getAttribute('href'));
+                        if (t) t.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        spring.v = 240;   // 回弹小冲量，物理阻尼收尾
+                    } else {
+                        spring.v = Math.max(spring.v, 180); // 轻拉仅物理回弹，不跳转
+                    }
+                }
+                weight.addEventListener('pointerup', endSpringDrag);
+                weight.addEventListener('pointercancel', endSpringDrag);
+            });
+
+            /* 对齐：按各链接中心把弹簧定位到导航下方（横排） */
+            function layoutSprings() {
+                var navRect = NAV.getBoundingClientRect();
+                springs.forEach(function(s) {
+                    var lr = s.link.getBoundingClientRect();
+                    s.orn.style.left = ((lr.left + lr.width / 2) - navRect.left - 20) + 'px';
+                });
+            }
+            layoutSprings();
+            addEventListener('resize', layoutSprings);
+
+            /* 滚动联动：复用导航 scrollspy 的 .active 标记，
+               激活区块对应弹簧伸展下沉，其余弹簧收缩贴顶（阻尼回收） */
+            function activeIndex() {
+                var links = document.querySelectorAll('.nav .nav-links a');
+                for (var i = 0; i < links.length; i++) {
+                    if (links[i].classList.contains('active')) return i;
+                }
+                return -1;
+            }
+
+            var lastTs = 0;
+            function frame(ts) {
+                if (!lastTs) lastTs = ts;
+                var dt = Math.min(0.032, (ts - lastTs) / 1000 || 0.016);
+                lastTs = ts;
+                var ai = activeIndex();
+
+                springs.forEach(function(s) {
+                    if (reduceMotion) {
+                        s.x = 0; s.v = 0;
+                        s.apply();
+                        return;
+                    }
+                    if (s.dragging) {
+                        s.apply();
+                        return;
+                    }
+                    s.xTarget = (ai === s.index) ? 0 : -s.L0 * 0.55; // 激活自然长度 / 非激活收缩贴顶
+                    var F = -42 * (s.x - s.xTarget) - 5.2 * s.v;    // F = -kx - cv
+                    s.v += F * dt;
+                    s.x += s.v * dt;
+                    if (s.x < s.minX) { s.x = s.minX; s.v *= -0.35; }
+                    if (s.x > s.maxX) { s.x = s.maxX; s.v *= -0.35; }
+                    if (Math.abs(s.x - s.xTarget) < 0.3 && Math.abs(s.v) < 0.3) {
+                        s.x = s.xTarget; s.v = 0;
+                    }
+                    s.apply();
+                });
+                requestAnimationFrame(frame);
+            }
+            requestAnimationFrame(frame);
+        })();
+    </script>
+</body>
+</html>

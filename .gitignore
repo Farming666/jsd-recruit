@@ -1,0 +1,7 @@
+# 密钥文件禁止提交
+.env
+
+# 日志与临时文件
+node_modules/
+*.log
+.DS_Store
