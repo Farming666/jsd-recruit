@@ -17,9 +17,12 @@ AIGC:
 
 | 文件 | 说明 |
 |------|------|
-| `hsd.html` | 前端页面（已接入 `/api/chat`，AI 图标已修复） |
-| `server.js` | 简易 Node 后端：静态托管 + AI 代理 + 简易限流，零依赖 |
-| `.env.example` | 配置模板（复制为 `.env` 使用） |
+| `index.html` | 前端页面（Cloudflare Pages 入口，与 `hsd.html` 内容一致） |
+| `hsd.html` | 前端页面副本（`/hsd`、`/hsd.html` 已配置 301 到首页） |
+| `server.js` | 本地 Node 开发服务器：静态托管 + AI 代理 + 简易限流，零依赖（部署 Cloudflare 时无需使用） |
+| `functions/api/chat.js` | Cloudflare Pages Function：AI 对话代理（部署时使用） |
+| `_headers` | Cloudflare 响应头与缓存策略 |
+| `_redirects` | Cloudflare 重定向规则 |
 | `.gitignore` | 已忽略 `.env`，防止密钥入库 |
 
 ## 本地运行
@@ -27,12 +30,14 @@ AIGC:
 前置要求：Node.js 18 及以上（本机已装 v20，无需安装任何 npm 包）。
 
 ```bash
-# 1. 创建配置
-copy .env.example .env
-# 2. 编辑 .env，至少填 AI_API_KEY 与 AI_MODEL（模板内有各家平台示例）
-# 3. 启动
+# 1. 创建配置（模板见 server.js 顶部注释，或参考 functions/api/chat.js 的环境变量说明）
+# 在项目根目录新建 .env 并填入：
+#   AI_API_KEY=sk-xxx
+#   AI_BASE_URL=https://api.openai.com/v1
+#   AI_MODEL=deepseek-chat
+# 2. 启动
 node server.js
-# 4. 浏览器打开 http://localhost:3000/ 即可使用
+# 3. 浏览器打开 http://localhost:3000/ 即可使用
 ```
 
 也可不建 `.env`，直接以环境变量方式传入：
@@ -48,7 +53,45 @@ set AI_API_KEY=sk-xxx && set AI_MODEL=deepseek-chat && node server.js
 | `/api/chat` | POST | 请求体 `{"message": "你的问题"}`，返回 `{"reply": "AI 回复"}` |
 | `/api/health` | GET | 健康检查，返回 `{"ok": true, "model": ..., "hasKey": ...}` |
 
-## 公开部署（推荐方案）
+## 方案一：Cloudflare Pages 部署（推荐，免费）
+
+本项目已改造为 Cloudflare Pages 可直接部署的静态站点格式：
+
+- 入口：`index.html`（`/hsd`、`/hsd.html` 已配置 301 到首页）
+- 静态资源：`img/` 相对路径引用，`_headers` 已配置安全头与图片长缓存
+- AI 对话：由 `functions/api/chat.js`（Pages Functions）代理，前端仍请求同域 `/api/chat`，零跨域
+
+### 方式 A：连接 GitHub 自动构建（推荐）
+
+1. 将本目录推送到 GitHub 仓库（`.env` 已被 `.gitignore` 忽略，不会入库）。
+2. Cloudflare Dashboard → Workers & Pages → Create → Pages → Connect to Git，选择该仓库。
+3. 构建配置：
+   - Build command：留空（纯静态，无需构建）
+   - Build output directory：`/`（根目录）
+4. 部署后在 Pages → Settings → Environment variables 配置：
+   - `AI_API_KEY`：TokenDance / 大模型网关密钥（必填）
+   - `AI_BASE_URL`：默认 `https://tokendance.space/gateway/v1`（可选）
+   - `AI_MODEL`：默认 `deepseek-v4-flash`（可选）
+   - `AI_SYSTEM_PROMPT`：AI 人设（可选）
+   - `RATE_LIMIT`：单 IP 每分钟限流，默认 20（可选）
+5. 保存后重新部署一次，AI 对话即可使用。
+
+> 注意：修改环境变量后需在 Deployments 页面手动 Retry 或重新部署才生效。
+
+### 方式 B：Wrangler CLI 直传
+
+```bash
+npm install -g wrangler
+wrangler pages deploy D:\JavaProjects\jsd-recruit\JSD_8_25 --project-name hsd-recruit
+```
+
+### 本地预览（模拟 Pages Functions 环境）
+
+```bash
+npx wrangler pages dev D:\JavaProjects\jsd-recruit\JSD_8_25
+```
+
+## 方案二：Node 云服务器部署（本地/自建服务器）
 
 1. **买一台云服务器**（腾讯云/阿里云轻量即可，学生优惠很便宜），本目录整体上传。
 2. 服务器装 Node.js，设置环境变量（或上传 `.env`，注意 `.env` 不要外泄）。
